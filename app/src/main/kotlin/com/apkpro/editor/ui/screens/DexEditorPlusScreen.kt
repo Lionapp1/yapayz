@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -646,7 +647,7 @@ private fun ExpandableClassItem(
                             containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
-                        Icon(Icons.Default.Code, null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Filled.Code, null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Kod Görüntüle")
                     }
@@ -655,10 +656,6 @@ private fun ExpandableClassItem(
         }
     }
 }
-
-// Sınıf ikonu için extension
-private val Icons.Default.ClassIcon: androidx.compose.ui.graphics.vector.ImageVector
-    get() = Icons.Default.Code
 
 // ========== SMALI KOD GÖRÜNTÜLEYİCİ ==========
 
@@ -1053,15 +1050,13 @@ private fun CodeLine(
         }
         
         // Kod satırı - Syntax Highlighting
+        val highlightedCode = if (searchQuery.isNotEmpty() && trimmedCode.contains(searchQuery, ignoreCase = true)) {
+            highlightSearch(trimmedCode, searchQuery)
+        } else {
+            highlightSmaliSyntax(trimmedCode)
+        }
         Text(
-            text = buildAnnotatedString {
-                val highlightedCode = if (searchQuery.isNotEmpty() && trimmedCode.contains(searchQuery, ignoreCase = true)) {
-                    highlightSearch(trimmedCode, searchQuery)
-                } else {
-                    highlightSmaliSyntax(trimmedCode)
-                }
-                append(highlightedCode)
-            },
+            text = highlightedCode,
             fontFamily = FontFamily.Monospace,
             fontSize = fontSize.sp,
             lineHeight = (fontSize + 6).sp,
@@ -1070,30 +1065,31 @@ private fun CodeLine(
     }
 }
 
-private fun AnnotatedString.Builder.highlightSearch(code: String, query: String): AnnotatedString {
+private fun highlightSearch(code: String, query: String): AnnotatedString {
+    val builder = AnnotatedString.Builder()
     val startIndex = code.indexOf(query, ignoreCase = true)
     if (startIndex == -1) {
         return highlightSmaliSyntax(code)
     }
-    
+
     val endIndex = startIndex + query.length
-    
+
     // Arama öncesi kısmı normal renklendir
-    append(highlightSmaliSyntax(code.substring(0, startIndex)))
-    
+    builder.append(highlightSmaliSyntax(code.substring(0, startIndex)))
+
     // Arama metnini vurgula
-    withStyle(SpanStyle(
+    builder.withStyle(SpanStyle(
         background = Color.Yellow.copy(alpha = 0.4f),
         color = Color.Black,
         fontWeight = FontWeight.Bold
     )) {
-        append(code.substring(startIndex, endIndex))
+        builder.append(code.substring(startIndex, endIndex))
     }
-    
+
     // Arama sonrası kısmı normal renklendir
-    append(highlightSmaliSyntax(code.substring(endIndex)))
-    
-    return toAnnotatedString()
+    builder.append(highlightSmaliSyntax(code.substring(endIndex)))
+
+    return builder.toAnnotatedString()
 }
 
 private fun highlightSmaliSyntax(code: String): AnnotatedString {
