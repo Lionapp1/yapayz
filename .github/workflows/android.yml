@@ -43,10 +43,32 @@ jobs:
     - name: Run unit tests
       run: ./gradlew testDebugUnitTest
 
+    - name: Fix Gradle permissions
+      run: chmod +x gradlew
+
     - name: Build Debug APK
+      id: build
+      continue-on-error: true
       run: |
-        ./gradlew assembleDebug --stacktrace
-        echo "Build completed, checking APK..."
+        ./gradlew assembleDebug --stacktrace --info 2>&1 | tee build.log
+        echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+    - name: Upload Build Log
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs
+        path: build.log
+        if-no-files-found: ignore
+
+    - name: Check Build Result
+      run: |
+        if [ "${{ steps.build.outputs.exit_code }}" != "0" ]; then
+          echo "BUILD FAILED with exit code: ${{ steps.build.outputs.exit_code }}"
+          cat build.log | tail -100
+          exit 1
+        fi
+        echo "Build successful"
 
     - name: Verify APK exists
       run: |
