@@ -1,6 +1,7 @@
 package com.turkceai.chat.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.turkceai.chat.data.model.ChatMessage
 import com.turkceai.chat.data.model.Message
@@ -12,8 +13,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
-    private val chatRepository: ChatRepository = ChatRepositoryImpl()
-) : ViewModel() {
+    application: Application
+) : AndroidViewModel(application) {
+
+    private val chatRepository: ChatRepository = ChatRepositoryImpl(application.applicationContext)
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()

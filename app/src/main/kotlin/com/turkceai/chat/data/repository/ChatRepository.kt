@@ -1,6 +1,8 @@
 package com.turkceai.chat.data.repository
 
+import android.content.Context
 import com.turkceai.chat.data.model.ChatMessage
+import com.turkceai.chat.data.ml.LocalAIModel
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
@@ -50,7 +52,12 @@ data class OpenRouterError(
     val message: String
 )
 
-class ChatRepositoryImpl : ChatRepository {
+class ChatRepositoryImpl(
+    context: Context? = null
+) : ChatRepository {
+
+    // Lokal AI Model - İnternet olmadan çalışır!
+    private val localModel: LocalAIModel? = context?.let { LocalAIModel(it) }
 
     // OpenRouter API - ücretsiz tier mevcut
     private val API_KEY = "sk-or-v1--demo-key" // Kullanıcı kendi keyini eklemeli
@@ -74,26 +81,20 @@ class ChatRepositoryImpl : ChatRepository {
         }
     }
 
-    private val demoResponses = mapOf(
-        "merhaba" to "Merhaba! 👋 Size nasıl yardımcı olabilirim?",
-        "nasılsın" to "Ben bir yapay zeka olduğum için duygularım yok, ama çalışıyorum! Siz nasılsınız?",
-        "selam" to "Selam! Hoş geldiniz. Bugün size nasıl yardımcı olabilirim?",
-        " yardım" to "Tabii! Size nasıl yardımcı olabilirim? Sorularınızı yanıtlamak için buradayım.",
-        "teşekkür" to "Rica ederim! 😊 Başka bir sorunuz varsa bekliyorum.",
-        "görüşürüz" to "Görüşürüz! İyi günler dilerim. 👋",
-        "ne yapabilirsin" to "Size şunlarda yardımcı olabilirim:\n\n• Sorularınızı yanıtlamak\n• Sohbet etmek\n• Bilgi vermek\n• Yardımcı öneriler sunmak\n\nNe hakkında konuşmak istersiniz?"
-    )
 
     override suspend fun sendMessage(messages: List<ChatMessage>): Result<String> {
         return try {
-            val lastMessage = messages.lastOrNull()?.content?.lowercase() ?: ""
+            val lastMessage = messages.lastOrNull()?.content ?: ""
+            val conversationTexts = messages.map { it.content }
             
-            // Demo mod: Basit yanıtlar (API key yoksa veya internet yoksa çalışır)
-            demoResponses.entries.find { lastMessage.contains(it.key) }?.let {
-                return Result.success(it.value)
+            // Önce lokal modeli dene (her zaman çalışır!)
+            localModel?.let { model ->
+                val localResponse = model.generateResponse(lastMessage, conversationTexts)
+                // Eğer API çalışmazsa lokal yanıt kullanılır
+                return@try Result.success(localResponse)
             }
 
-            // API çağrısı dene
+            // API çağrısı dene (opsiyonel)
             val apiMessages = messages.map { msg ->
                 OpenRouterMessage(
                     role = if (msg.isFromUser) "user" else "assistant",
@@ -128,30 +129,20 @@ class ChatRepositoryImpl : ChatRepository {
                 }
             }
         } catch (e: Exception) {
-            // İnternet yok veya hata, demo mod
-            val lastMessage = messages.lastOrNull()?.content?.lowercase() ?: ""
-            Result.success(generateLocalResponse(lastMessage))
+            // İnternet yok veya hata, lokal model yanıt verir
+            val lastMessage = messages.lastOrNull()?.content ?: ""
+            val conversationTexts = messages.map { it.content }
+            val fallbackResponse = localModel?.generateResponse(lastMessage, conversationTexts)
+                ?: "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin."
+            Result.success(fallbackResponse)
         }
     }
 
-    private fun generateLocalResponse(input: String): String {
-        return when {
-            input.contains("nasıl") || input.contains("?") -> 
-                "Bu konuda size yardımcı olmaya çalışayım. Daha detaylı bilgi verir misiniz?"
-            input.contains("teşekkür") || input.contains("sağol") ->
-                "Rica ederim! 😊 Yardımcı olabildiysem ne mutlu."
-            input.contains("günaydın") || input.contains("iyi günler") ->
-                "Günaydın! ☀️ Harika bir gün dilerim. Size nasıl yardımcı olabilirim?"
-            input.contains("iyi geceler") || input.contains("uyu") ->
-                "İyi geceler! 🌙 Tatlı rüyalar dilerim."
-            input.contains("türkiye") || input.contains("türk") ->
-                "Türkiye çok güzel bir ülke! 🇹🇷 Türkçe konuşmak benim için büyük bir zevk."
-            input.contains("android") || input.contains("kotlin") ->
-                "Android ve Kotlin harika teknolojiler! Bu uygulama da Kotlin ve Jetpack Compose ile yazıldı."
-            input.length < 5 ->
-                "Anladım. Başka bir konuda yardımcı olabilir miyim?"
-            else -> "İlginç bir konu! Bu hakkında daha fazla bilgi verir misiniz?"
-        }
+    /**
+     * Lokal model durumunu kontrol et
+     */
+    fun isLocalModelReady(): Boolean {
+        return localModel != null
     }
 
     fun close() {
