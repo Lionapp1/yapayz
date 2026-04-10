@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Türkçe AI</string>
+    <string name="hint_message">Mesajınızı yazın...</string>
+    <string name="send">Gönder</string>
+    <string name="welcome_title">Türkçe AI Sohbet</string>
+    <string name="welcome_subtitle">Yapay zeka ile Türkçe sohbet edin</string>
+    <string name="thinking">Düşünüyor...</string>
+    <string name="error_message">Bir hata oluştu. Lütfen tekrar deneyin.</string>
+    <string name="empty_message">Henüz mesaj yok. Sohbete başlayın!</string>
+    <string name="clear_chat">Sohbeti Temizle</string>
+    <string name="settings">Ayarlar</string>
+    <string name="api_key_hint">API Anahtarı (isteğe bağlı)</string>
+</resources>
