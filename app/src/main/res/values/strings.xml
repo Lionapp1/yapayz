@@ -1,0 +1,52 @@
+<resources>
+    <string name="app_name">APK Pro Editor</string>
+    <string name="app_slogan">Profesyonel APK Analiz ve Düzenleme</string>
+    
+    <!-- Ana Ekran -->
+    <string name="select_apk">APK Seç</string>
+    <string name="recent_files">Son Dosyalar</string>
+    <string name="settings">Ayarlar</string>
+    <string name="about">Hakkında</string>
+    
+    <!-- APK Analiz -->
+    <string name="apk_info">APK Bilgisi</string>
+    <string name="manifest">Manifest</string>
+    <string name="dex_files">DEX Dosyaları</string>
+    <string name="resources">Kaynaklar</string>
+    <string name="assets">Assets</string>
+    <string name="signatures">İmzalar</string>
+    
+    <!-- DEX Görüntüleme -->
+    <string name="classes">Sınıflar</string>
+    <string name="methods">Metodlar</string>
+    <string name="fields">Alanlar</string>
+    <string name="strings">Stringler</string>
+    <string name="smali_code">Smali Kod</string>
+    <string name="java_code">Java Kod</string>
+    
+    <!-- ARSC -->
+    <string name="arsc_strings">Metinler</string>
+    <string name="arsc_drawables">Görseller</string>
+    <string name="arsc_layouts">Layouts</string>
+    <string name="arsc_colors">Renkler</string>
+    <string name="arsc_dimensions">Boyutlar</string>
+    
+    <!-- İşlemler -->
+    <string name="extract">Çıkar</string>
+    <string name="decompile">Decompile</string>
+    <string name="recompile">Recompile</string>
+    <string name="sign">İmzala</string>
+    <string name="zipalign">Zipalign</string>
+    <string name="convert">Dönüştür</string>
+    
+    <!-- Converter -->
+    <string name="apk_to_bundle">APK → App Bundle</string>
+    <string name="bundle_to_apk">App Bundle → APK</string>
+    <string name="split_apks">Split APKs</string>
+    
+    <!-- Hatalar -->
+    <string name="error_loading_apk">APK yüklenemedi</string>
+    <string name="error_parsing_dex">DEX ayrıştırma hatası</string>
+    <string name="error_file_not_found">Dosya bulunamadı</string>
+    <string name="error_permission_denied">İzin reddedildi</string>
+</resources>
