@@ -25,13 +25,32 @@ jobs:
         with:
           gradle-version: wrapper
 
-      - name: Build Android App
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Decode Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > release.keystore
+            echo "Keystore decoded successfully"
+          else
+            echo "No keystore provided, will use debug signing"
+          fi
+
+      - name: Build Android App (Release)
+        env:
+          KEYSTORE_PATH: release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Locate APK
         id: apk
         run: |
-          APK=$(find app/build -name "*.apk" | head -1)
+          APK=$(find app/build/outputs/apk/release -name "*.apk" 2>/dev/null | head -1)
+          if [ -z "$APK" ]; then
+            APK=$(find app/build -name "*.apk" | head -1)
+          fi
           echo "path=$APK" >> $GITHUB_OUTPUT
           echo "Found: $APK"
 
