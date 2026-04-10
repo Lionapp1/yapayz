@@ -17,6 +17,9 @@ class LocalAIModel(private val context: Context) {
     private var interpreter: Interpreter? = null
     private var isInitialized = false
     
+    // Universal Sentence Encoder - Semantic Similarity için
+    private val useModel: USEModel = USEModel(context)
+    
     // Basit Türkçe yanıt üreticisi - Template tabanlı
     private val responseTemplates = mapOf(
         "greeting" to listOf(
@@ -105,6 +108,7 @@ class LocalAIModel(private val context: Context) {
     
     /**
      * Girdi metnine göre akıllı yanıt üret
+     * USE Model ile semantic similarity kullanır
      */
     fun generateResponse(input: String, conversationHistory: List<String> = emptyList()): String {
         if (!isInitialized) {
@@ -113,25 +117,33 @@ class LocalAIModel(private val context: Context) {
         
         val normalizedInput = input.lowercase().trim()
         
-        // Konu tespiti
-        val detectedTopic = detectTopic(normalizedInput)
-        
-        // Yanıt seç
-        val responses = responseTemplates[detectedTopic] ?: responseTemplates["default"]!!
-        
-        // Rastgele ama tutarlı yanıt seç (history'e bakarak)
-        val seed = (conversationHistory.size + normalizedInput.length) % responses.size
-        var response = responses[seed]
-        
-        // Konuşma geçmişine göre kişiselleştir
-        if (conversationHistory.isNotEmpty()) {
-            val lastExchange = conversationHistory.takeLast(2).joinToString(" ")
-            if (lastExchange.contains("?")) {
-                response += "\n\nBaşka sorularınız var mı? 🤔"
+        // Önce USE Model ile semantic similarity dene (eğer yüklüyse)
+        if (useModel.isLoaded()) {
+            val semanticResponse = useModel.findBestResponse(normalizedInput, responseTemplates)
+            if (semanticResponse != null) {
+                return personalizeResponse(semanticResponse, conversationHistory)
             }
         }
         
-        return response
+        // Yedek: Keyword tabanlı tespit
+        val detectedTopic = detectTopic(normalizedInput)
+        val responses = responseTemplates[detectedTopic] ?: responseTemplates["default"]!!
+        
+        val seed = (conversationHistory.size + normalizedInput.length) % responses.size
+        val response = responses[seed]
+        
+        return personalizeResponse(response, conversationHistory)
+    }
+    
+    private fun personalizeResponse(response: String, conversationHistory: List<String>): String {
+        var result = response
+        if (conversationHistory.isNotEmpty()) {
+            val lastExchange = conversationHistory.takeLast(2).joinToString(" ")
+            if (lastExchange.contains("?")) {
+                result += "\n\nBaşka sorularınız var mı? 🤔"
+            }
+        }
+        return result
     }
     
     /**
