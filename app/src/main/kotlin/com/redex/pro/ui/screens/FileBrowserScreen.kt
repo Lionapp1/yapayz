@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -17,6 +18,9 @@ import androidx.compose.ui.unit.sp
 import com.redex.pro.data.model.ApkFileEntry
 import com.redex.pro.data.model.ApkFileType
 import com.redex.pro.data.model.ApkStructure
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,19 +35,41 @@ fun FileBrowserScreen(
     var searchQuery by remember { mutableStateOf("") }
     
     val tabs = listOf("Tümü", "DEX", "Kaynaklar", "Assets", "Lib")
+    val listState = rememberLazyListState()
     
-    val filteredFiles = remember(searchQuery, selectedTab, structure) {
-        val files = when (selectedTab) {
-            0 -> structure.allFiles
-            1 -> structure.dexFiles
-            2 -> structure.resources
-            3 -> structure.assets
-            4 -> structure.libraries
-            else -> structure.allFiles
+    // Debounce arama için
+    var debouncedQuery by remember { mutableStateOf("") }
+    
+    LaunchedEffect(searchQuery) {
+        delay(200) // 200ms debounce
+        debouncedQuery = searchQuery
+    }
+    
+    // Performans için filtreleme - background thread'de
+    var filteredFiles by remember { mutableStateOf<List<ApkFileEntry>>(emptyList()) }
+    var isFiltering by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(debouncedQuery, selectedTab, structure) {
+        isFiltering = true
+        withContext(Dispatchers.Default) {
+            val files = when (selectedTab) {
+                0 -> structure.allFiles
+                1 -> structure.dexFiles
+                2 -> structure.resources
+                3 -> structure.assets
+                4 -> structure.libraries
+                else -> structure.allFiles
+            }
+            
+            val result = if (debouncedQuery.isEmpty()) {
+                files
+            } else {
+                files.filter { it.name.contains(debouncedQuery, ignoreCase = true) }
+            }
+            
+            filteredFiles = result
+            isFiltering = false
         }
-        
-        if (searchQuery.isEmpty()) files
-        else files.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
     
     // Android fiziksel geri tuşu desteği
@@ -69,12 +95,8 @@ fun FileBrowserScreen(
                     }
                 },
                 actions = {
-                    // DEX Editör Plus
                     IconButton(onClick = onDexEditorClick) {
                         Icon(Icons.Default.Edit, "DEX Editör")
-                    }
-                    IconButton(onClick = { /* Arama */ }) {
-                        Icon(Icons.Default.Search, "Ara")
                     }
                 }
             )
@@ -112,15 +134,25 @@ fun FileBrowserScreen(
             }
             
             // Dosya listesi
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(8.dp)
-            ) {
-                items(filteredFiles) { file ->
-                    FileEntryItem(
-                        file = file,
-                        onClick = { onFileClick(file) }
-                    )
+            if (isFiltering) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(8.dp)
+                ) {
+                    items(filteredFiles, key = { it.path }) { file ->
+                        FileEntryItem(
+                            file = file,
+                            onClick = { onFileClick(file) }
+                        )
+                    }
                 }
             }
         }
@@ -145,7 +177,6 @@ private fun FileEntryItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Dosya tipi ikonu
             Icon(
                 imageVector = getFileIcon(file.type),
                 contentDescription = null,
@@ -183,7 +214,6 @@ private fun FileEntryItem(
                 }
             }
             
-            // Düzenle ikonu
             if (file.canEdit) {
                 Icon(
                     imageVector = Icons.Default.Edit,
