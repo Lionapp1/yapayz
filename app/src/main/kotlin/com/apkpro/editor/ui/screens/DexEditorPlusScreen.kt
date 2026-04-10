@@ -141,14 +141,14 @@ fun DexEditorPlusScreen(
                     // Sıralama
                     IconButton(onClick = { sortByMethodCount = !sortByMethodCount }) {
                         Icon(
-                            if (sortByMethodCount) Icons.Default.Sort else Icons.Default.SortByAlpha,
+                            if (sortByMethodCount) Icons.Filled.Sort else Icons.Filled.SortByAlpha,
                             contentDescription = "Sırala"
                         )
                     }
                     // Filtre
                     IconButton(onClick = { showOnlyUserClasses = !showOnlyUserClasses }) {
                         Icon(
-                            if (showOnlyUserClasses) Icons.Default.FilterAlt else Icons.Default.FilterAltOff,
+                            if (showOnlyUserClasses) Icons.Filled.FilterAlt else Icons.Filled.FilterAltOff,
                             contentDescription = "Filtre",
                             tint = if (showOnlyUserClasses) MaterialTheme.colorScheme.primary 
                                    else MaterialTheme.colorScheme.onSurface
@@ -230,7 +230,7 @@ fun DexEditorPlusScreen(
                         Text("Sınıf ara... (örn: MainActivity, onCreate)") 
                     },
                     leadingIcon = { 
-                        Icon(Icons.Default.Search, null, tint = MaterialTheme.colorScheme.primary) 
+                        Icon(Icons.Filled.Search, null, tint = MaterialTheme.colorScheme.primary) 
                     },
                     trailingIcon = {
                         if (searchQueryFlow.value.isNotEmpty()) {
@@ -240,7 +240,7 @@ fun DexEditorPlusScreen(
                                     coroutineScope.launch { searchQueryFlow.emit("") }
                                 }
                             ) {
-                                Icon(Icons.Default.Clear, "Temizle")
+                                Icon(Icons.Filled.Clear, "Temizle")
                             }
                         }
                     },
@@ -265,7 +265,7 @@ fun DexEditorPlusScreen(
                         title = "Sınıf",
                         value = filteredClasses.size.toString(),
                         total = currentDex?.second?.size?.toString() ?: "0",
-                        icon = Icons.Default.Code,
+                        icon = Icons.Filled.Code,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f)
                     )
@@ -273,7 +273,7 @@ fun DexEditorPlusScreen(
                         title = "Metod",
                         value = filteredClasses.sumOf { it.methods.size }.toString(),
                         total = totalMethods.toString(),
-                        icon = Icons.Default.Functions,
+                        icon = Icons.Filled.Functions,
                         color = Color(0xFF2196F3),
                         modifier = Modifier.weight(1f)
                     )
@@ -281,7 +281,7 @@ fun DexEditorPlusScreen(
                         title = "Field",
                         value = filteredClasses.sumOf { it.fields.size }.toString(),
                         total = totalFields.toString(),
-                        icon = Icons.Default.DataObject,
+                        icon = Icons.Filled.DataObject,
                         color = Color(0xFF4CAF50),
                         modifier = Modifier.weight(1f)
                     )
@@ -326,7 +326,7 @@ fun DexEditorPlusScreen(
                             ) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Icon(
-                                        Icons.Default.SearchOff,
+                                        Icons.Filled.SearchOff,
                                         null,
                                         modifier = Modifier.size(48.dp),
                                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
@@ -443,7 +443,7 @@ private fun ExpandableClassItem(
             ) {
                 // Aç/kapa ikonu
                 Icon(
-                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                     contentDescription = if (isExpanded) "Daralt" else "Genişlet",
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -453,7 +453,7 @@ private fun ExpandableClassItem(
                 
                 // Sınıf ikonu
                 Icon(
-                    imageVector = if (isFrameworkClass) Icons.Default.Code else Icons.Default.ClassIcon,
+                    imageVector = if (isFrameworkClass) Icons.Filled.Code else Icons.Filled.Build,
                     contentDescription = null,
                     modifier = Modifier.size(28.dp),
                     tint = if (isFrameworkClass) 
@@ -532,7 +532,7 @@ private fun ExpandableClassItem(
                     modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
-                        Icons.Default.OpenInNew,
+                        Icons.Filled.OpenInNew,
                         contentDescription = "Kod Görüntüle",
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -572,7 +572,7 @@ private fun ExpandableClassItem(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    Icons.Default.Functions,
+                                    Icons.Filled.Functions,
                                     null,
                                     modifier = Modifier.size(16.dp),
                                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
@@ -614,7 +614,7 @@ private fun ExpandableClassItem(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    Icons.Default.DataObject,
+                                    Icons.Filled.DataObject,
                                     null,
                                     modifier = Modifier.size(16.dp),
                                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
@@ -721,7 +721,7 @@ fun SmaliViewerScreen(
                     // Satır numaraları
                     IconButton(onClick = { showLineNumbers = !showLineNumbers }) {
                         Icon(
-                            if (showLineNumbers) Icons.Default.FormatListNumbered else Icons.Default.FormatListBulleted,
+                            if (showLineNumbers) Icons.Filled.FormatListNumbered else Icons.Filled.FormatListBulleted,
                             contentDescription = "Satır Numaraları"
                         )
                     }
@@ -771,7 +771,7 @@ fun SmaliViewerScreen(
                             .fillMaxWidth()
                             .padding(8.dp),
                         placeholder = { Text("Metod ara...", fontSize = 12.sp) },
-                        leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(18.dp)) },
+                        leadingIcon = { Icon(Icons.Filled.Search, null, modifier = Modifier.size(18.dp)) },
                         singleLine = true,
                         shape = RoundedCornerShape(8.dp),
                         textStyle = MaterialTheme.typography.bodySmall
@@ -791,7 +791,7 @@ fun SmaliViewerScreen(
                             modifier = Modifier.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Code, null, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Filled.Code, null, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(
                                 "Tüm Sınıf",
@@ -917,7 +917,7 @@ fun SmaliViewerScreen(
                                     modifier = Modifier.size(40.dp),
                                     containerColor = MaterialTheme.colorScheme.secondaryContainer
                                 ) {
-                                    Icon(Icons.Default.VerticalAlignTop, "Başa Git", modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Filled.VerticalAlignTop, "Başa Git", modifier = Modifier.size(20.dp))
                                 }
                                 FloatingActionButton(
                                     onClick = {
@@ -928,7 +928,7 @@ fun SmaliViewerScreen(
                                     modifier = Modifier.size(40.dp),
                                     containerColor = MaterialTheme.colorScheme.secondaryContainer
                                 ) {
-                                    Icon(Icons.Default.VerticalAlignBottom, "Sona Git", modifier = Modifier.size(20.dp))
+                                    Icon(Icons.Filled.VerticalAlignBottom, "Sona Git", modifier = Modifier.size(20.dp))
                                 }
                             }
                         }
@@ -963,7 +963,7 @@ private fun MethodListItem(
         ) {
             // Metod ikonu
             Icon(
-                imageVector = if (isConstructor) Icons.Default.Home else Icons.Default.Functions,
+                imageVector = if (isConstructor) Icons.Filled.Home else Icons.Filled.Functions,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp),
                 tint = when {
@@ -1158,7 +1158,7 @@ private fun DropdownMenuContent(
     var expanded by remember { mutableStateOf(false) }
     
     IconButton(onClick = { expanded = true }) {
-        Icon(Icons.Default.MoreVert, "Menü")
+        Icon(Icons.Filled.MoreVert, "Menü")
     }
     
     DropdownMenu(
