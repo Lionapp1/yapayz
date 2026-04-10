@@ -83,10 +83,38 @@ jobs:
           echo "path=$APK" >> $GITHUB_OUTPUT
           echo "Found: $APK"
 
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          # Son 10 commit mesajını al
+          echo "### 📋 Son Değişiklikler" > release_notes.md
+          echo "" >> release_notes.md
+          git log --oneline -10 --no-decorate >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 🆕 Bu Sürümde Neler Var?" >> release_notes.md
+          echo "- ✅ APK imzalama tamamlandı" >> release_notes.md
+          echo "- ✅ DEX Editor Plus geliştirildi" >> release_notes.md
+          echo "- ✅ Text Editor eklendi" >> release_notes.md
+          echo "- ✅ Smali ve XML syntax highlighting" >> release_notes.md
+          echo "- ✅ Hızlı arama ve gezinme" >> release_notes.md
+          echo "- ✅ Hafıza ve performans optimizasyonları" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 📱 APK Bilgileri" >> release_notes.md
+          echo "- **Paket Adı:** com.apkpro.editor" >> release_notes.md
+          echo "- **Min SDK:** 26 (Android 8.0)" >> release_notes.md
+          echo "- **Target SDK:** 34 (Android 14)" >> release_notes.md
+          echo "- **İmzalama:** ✅ İmzalı" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### ⚠️ Notlar" >> release_notes.md
+          echo "- APK'yi yükleyebilmek için 'Bilinmeyen Kaynaklar' izni vermeniz gerekebilir" >> release_notes.md
+          echo "- Yedek almayı unutmayın!" >> release_notes.md
+          cat release_notes.md
+
       - name: Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ github.run_number }}
           name: apkeditor pro v${{ github.run_number }}
+          body_path: release_notes.md
           files: ${{ steps.apk.outputs.path }}
