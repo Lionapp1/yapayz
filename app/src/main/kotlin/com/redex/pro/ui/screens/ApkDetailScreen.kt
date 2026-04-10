@@ -10,7 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,12 +32,20 @@ fun ApkDetailScreen(
     onViewConverter: () -> Unit,
     onOpenFileBrowser: () -> Unit = {},
     onOpenDexEditor: () -> Unit = {},
+    onEditIcon: () -> Unit = {},
+    onChangeName: (String) -> Unit = {},
+    onChangePackage: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editType by remember { mutableStateOf("") }
+    var editValue by remember { mutableStateOf("") }
+    
     // Android fiziksel geri tuşu desteği
     BackHandler(enabled = true) {
         onBack()
     }
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -78,6 +86,56 @@ fun ApkDetailScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            // APK Düzenleme Butonları
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "APK Düzenleme",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            EditButton(
+                                icon = Icons.Default.Image,
+                                text = "İkon",
+                                onClick = onEditIcon
+                            )
+                            EditButton(
+                                icon = Icons.Default.Edit,
+                                text = "İsim",
+                                onClick = {
+                                    editType = "name"
+                                    editValue = apk.name
+                                    showEditDialog = true
+                                }
+                            )
+                            EditButton(
+                                icon = Icons.Default.Package,
+                                text = "Paket",
+                                onClick = {
+                                    editType = "package"
+                                    editValue = apk.packageName
+                                    showEditDialog = true
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            
             // Uygulama Bilgileri - Modern kart
             item {
                 ModernInfoCard(
@@ -151,118 +209,155 @@ fun ApkDetailScreen(
             if (apk.permissions.isNotEmpty()) {
                 item {
                     Text(
-                        "İzinler (${apk.permissions.size})",
+                        "İzinler",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                     )
                 }
                 
-                items(apk.permissions.take(10)) { permission ->
+                item {
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     ) {
-                        Text(
-                            permission.substringAfterLast("."),
-                            modifier = Modifier.padding(12.dp),
-                            fontSize = 13.sp
-                        )
-                    }
-                }
-                
-                if (apk.permissions.size > 10) {
-                    item {
-                        Text(
-                            "+${apk.permissions.size - 10} izin daha...",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            apk.permissions.take(10).forEach { permission ->
+                                Text(
+                                    permission,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(vertical = 2.dp)
+                                )
+                            }
+                            if (apk.permissions.size > 10) {
+                                Text(
+                                    "+${apk.permissions.size - 10} daha fazla",
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
             
-            // Hızlı Erişim Butonları
+            // Kaynaklar
             item {
-                Text(
-                    "Hızlı Erişim",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                )
-            }
-            
-            item {
-                ActionButtonGrid(
-                    buttons = listOf(
-                        Triple(Icons.Default.Description, "Manifest", onViewManifest),
-                        Triple(Icons.Default.Settings, "Kaynaklar (${apk.resources.stringCount})", onViewArsc),
-                        Triple(Icons.Default.Code, "DEX", onViewDex),
-                        Triple(Icons.Default.Transform, "Dönüştür", onViewConverter)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
                     )
-                )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "Kaynaklar",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            ResourceButton("resources.arsc", Icons.Default.Storage, onViewArsc)
+                            ResourceButton("AndroidManifest.xml", Icons.Default.Description, onViewManifest)
+                        }
+                    }
+                }
             }
         }
     }
+    
+    // Düzenleme Dialog
+    if (showEditDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { 
+                Text(
+                    when (editType) {
+                        "name" -> "İsim Değiştir"
+                        "package" -> "Paket Değiştir"
+                        else -> "Düzenle"
+                    }
+                )
+            },
+            text = {
+                OutlinedTextField(
+                    value = editValue,
+                    onValueChange = { editValue = it },
+                    label = { Text("Yeni değer") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        when (editType) {
+                            "name" -> onChangeName(editValue)
+                            "package" -> onChangePackage(editValue)
+                        }
+                        showEditDialog = false
+                    }
+                ) {
+                    Text("Kaydet")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showEditDialog = false }) {
+                    Text("İptal")
+                }
+            }
+        )
+    }
 }
 
 @Composable
-private fun InfoCard(title: String, content: @Composable () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
+private fun EditButton(
+    icon: ImageVector,
+    text: String,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.weight(1f),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            content()
+        Icon(icon, contentDescription = null, tint = Color.White)
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(text, color = Color.White)
+    }
+}
+
+@Composable
+private fun ResourceButton(
+    text: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.weight(1f),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.secondary
+        )
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(icon, contentDescription = null, tint = Color.White)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text, fontSize = 10.sp, color = Color.White)
         }
     }
 }
-
-@Composable
-private fun InfoRow(label: String, value: String, monospace: Boolean = false) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            label,
-            fontSize = 13.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
-        Text(
-            value,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            fontFamily = if (monospace) androidx.compose.ui.text.font.FontFamily.Monospace else null
-        )
-    }
-}
-
-private fun formatFileSize(size: Long): String {
-    return when {
-        size >= 1024 * 1024 * 1024 -> "%.2f GB".format(size.toDouble() / (1024 * 1024 * 1024))
-        size >= 1024 * 1024 -> "%.2f MB".format(size.toDouble() / (1024 * 1024))
-        size >= 1024 -> "%.2f KB".format(size.toDouble() / 1024)
-        else -> "$size B"
-    }
-}
-
-// ========== YENİ MODERN KOMPONENTLER ==========
 
 @Composable
 private fun ModernInfoCard(
@@ -271,34 +366,25 @@ private fun ModernInfoCard(
     content: @Composable () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
+        modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 12.dp)
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = icon,
+                    icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
-                Spacer(Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = title,
+                    title,
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    fontWeight = FontWeight.Bold
                 )
             }
+            Spacer(modifier = Modifier.height(12.dp))
             content()
         }
     }
@@ -306,76 +392,76 @@ private fun ModernInfoCard(
 
 @Composable
 private fun ModernInfoGrid(items: List<Pair<String, String>>) {
-    Column {
-        items.chunked(2).forEach { rowItems ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                rowItems.forEach { (label, value) ->
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 4.dp, horizontal = 4.dp)
-                    ) {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = value,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-                if (rowItems.size == 1) {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items.forEach { (label, value) ->
+            InfoRow(label, value)
         }
+    }
+}
+
+@Composable
+private fun InfoRow(
+    label: String,
+    value: String,
+    monospace: Boolean = false
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+        Text(
+            value,
+            style = if (monospace) {
+                MaterialTheme.typography.bodyMedium.copy(fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace)
+            } else {
+                MaterialTheme.typography.bodyMedium
+            },
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
 @Composable
 private fun SecurityStatusCard(isSigned: Boolean) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (isSigned) 
-                Color(0xFF4CAF50).copy(alpha = 0.15f) 
+                Color(0xFF4CAF50).copy(alpha = 0.1f)
             else 
-                Color(0xFFFFA726).copy(alpha = 0.15f)
+                Color(0xFFF44336).copy(alpha = 0.1f)
         )
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = if (isSigned) Icons.Default.Security else Icons.Default.Warning,
+                if (isSigned) Icons.Default.CheckCircle else Icons.Default.Cancel,
                 contentDescription = null,
-                tint = if (isSigned) Color(0xFF4CAF50) else Color(0xFFFFA726),
+                tint = if (isSigned) Color(0xFF4CAF50) else Color(0xFFF44336),
                 modifier = Modifier.size(32.dp)
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(
-                    text = if (isSigned) "APK İmzalı" else "İmza Yok!",
-                    style = MaterialTheme.typography.titleSmall,
+                    if (isSigned) "İmzalı APK" else "İmzasız APK",
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (isSigned) Color(0xFF4CAF50) else Color(0xFFFFA726)
+                    color = if (isSigned) Color(0xFF4CAF50) else Color(0xFFF44336)
                 )
                 Text(
-                    text = if (isSigned) "Güvenli - Orjinal imza doğrulandı" 
-                           else "Uyarı - APK imzasız veya geçersiz",
+                    if (isSigned) "Bu APK güvenli bir şekilde imzalanmış" 
+                    else "Bu APK imzalanmamış, dikkatli olun",
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (isSigned) Color(0xFF4CAF50) else Color(0xFFFFA726)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
         }
@@ -388,81 +474,52 @@ private fun ExpandableInfoCard(
     icon: ImageVector,
     content: @Composable () -> Unit
 ) {
+    var expanded by remember { mutableStateOf(false) }
+    
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 12.dp)
+                onClick = { expanded = !expanded }
             ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 Icon(
-                    imageVector = icon,
+                    if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
             }
-            content()
+            if (expanded) {
+                Spacer(modifier = Modifier.height(12.dp))
+                content()
+            }
         }
     }
 }
 
-@Composable
-private fun ActionButtonGrid(
-    buttons: List<Triple<ImageVector, String, () -> Unit>>
-) {
-    Column(
-        modifier = Modifier.padding(vertical = 8.dp)
-    ) {
-        buttons.chunked(2).forEach { rowButtons ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                rowButtons.forEach { (icon, label, onClick) ->
-                    ElevatedButton(
-                        onClick = onClick,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(56.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    }
-                }
-                if (rowButtons.size == 1) {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-        }
+private fun formatFileSize(size: Long): String {
+    return when {
+        size < 1024 -> "$size B"
+        size < 1024 * 1024 -> "${size / 1024} KB"
+        size < 1024 * 1024 * 1024 -> String.format("%.1f MB", size / (1024.0 * 1024.0))
+        else -> String.format("%.1f GB", size / (1024.0 * 1024.0 * 1024.0))
     }
 }

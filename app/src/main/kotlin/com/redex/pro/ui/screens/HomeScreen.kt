@@ -91,6 +91,9 @@ fun HomeScreen(viewModel: MainViewModel) {
                         onViewConverter = { viewModel.navigateTo(MainViewModel.UiState.Converter) },
                         onOpenFileBrowser = { viewModel.openFileBrowser() },
                         onOpenDexEditor = { viewModel.openDexEditor() },
+                        onEditIcon = { },
+                        onChangeName = { viewModel.changeApkName(it) },
+                        onChangePackage = { viewModel.changePackageName(it) },
                         modifier = Modifier.padding(padding)
                     )
                 }
@@ -205,12 +208,20 @@ private fun HomeContent(
                 .padding(bottom = 16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+            ),
+            shape = RoundedCornerShape(16.dp)
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Icon(
+                    Icons.Default.Android,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(64.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     "ReDex Pro",
                     style = MaterialTheme.typography.headlineMedium,
@@ -222,15 +233,18 @@ private fun HomeContent(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 4.dp)
                 )
                 
                 Button(
                     onClick = onSelectApk,
-                    modifier = Modifier.padding(top = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
-                    )
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
@@ -244,18 +258,29 @@ private fun HomeContent(
             "Özellikler",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 12.dp)
         )
         
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            FeatureItem(Icons.Default.Code, "DEX Görüntüle", "Smali/Java")
-            FeatureItem(Icons.Default.Settings, "ARSC Parser", "Kaynaklar")
-            FeatureItem(Icons.Default.Transform, "Dönüştürücü", "APK/AAB")
+            FeatureCard(Icons.Default.Code, "DEX", "Smali/Java", Modifier.weight(1f))
+            FeatureCard(Icons.Default.Settings, "ARSC", "Kaynaklar", Modifier.weight(1f))
+            FeatureCard(Icons.Default.Transform, "Dönüş", "APK/AAB", Modifier.weight(1f))
+        }
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FeatureCard(Icons.Default.Edit, "Düzenle", "XML/Manifest", Modifier.weight(1f))
+            FeatureCard(Icons.Default.Image, "İkon", "Resimler", Modifier.weight(1f))
+            FeatureCard(Icons.Default.Package, "Paket", "Ad/Değiş", Modifier.weight(1f))
         }
         
         // Güncelleme kartı
@@ -266,7 +291,8 @@ private fun HomeContent(
                 .clickable { onUpdateClick() },
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer
-            )
+            ),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
@@ -301,7 +327,7 @@ private fun HomeContent(
                 "Son Dosyalar",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 12.dp)
             )
             
             LazyColumn {
@@ -317,19 +343,36 @@ private fun HomeContent(
 }
 
 @Composable
-private fun FeatureItem(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String, desc: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(8.dp)
+private fun FeatureCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    desc: String,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.height(100.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = title,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(32.dp)
-        )
-        Text(title, fontSize = 12.sp, fontWeight = FontWeight.Medium)
-        Text(desc, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(title, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text(desc, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+        }
     }
 }
 
@@ -342,28 +385,30 @@ private fun RecentFileItem(apk: ApkInfo, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 Icons.Default.Android,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(36.dp)
             )
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     apk.name,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1
+                    maxLines = 1,
+                    fontSize = 14.sp
                 )
                 Text(
                     "${apk.packageName} • ${formatFileSize(apk.size)}",
-                    fontSize = 12.sp,
+                    fontSize = 11.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }

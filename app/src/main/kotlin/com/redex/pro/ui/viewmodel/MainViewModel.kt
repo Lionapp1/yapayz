@@ -276,3 +276,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     
 }
+    
+    fun changeApkName(newName: String) {
+        viewModelScope.launch {
+            _currentApk.value?.let { apk ->
+                _isLoading.value = true
+                try {
+                    val updatedApk = apk.copy(name = newName)
+                    _currentApk.value = updatedApk
+                    _error.value = "APK ismi değiştirildi: $newName"
+                } catch (e: Exception) {
+                    _error.value = "İsim değiştirme hatası: ${e.message}"
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+        }
+    }
+    
+    fun changePackageName(newPackage: String) {
+        viewModelScope.launch {
+            _currentApk.value?.let { apk ->
+                _isLoading.value = true
+                try {
+                    val updatedApk = apk.copy(packageName = newPackage)
+                    _currentApk.value = updatedApk
+                    _error.value = "Paket adı değiştirildi: $newPackage"
+                } catch (e: Exception) {
+                    _error.value = "Paket değiştirme hatası: ${e.message}"
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+        }
+    }
+    
+    fun goHome() {
+        _uiState.value = UiState.Home
+    }

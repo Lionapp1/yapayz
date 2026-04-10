@@ -2,6 +2,8 @@ package com.redex.pro.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,7 +13,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.redex.pro.updater.AppUpdater
@@ -37,6 +41,20 @@ fun UpdateScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
     val downloadState by updateManager.downloadState.collectAsState()
+    
+    // Animasyon için
+    var rotation by remember { mutableStateOf(0f) }
+    val rotationAngle by animateFloatAsState(
+        targetValue = rotation,
+        animationSpec = tween(durationMillis = 1000),
+        label = "rotation"
+    )
+    
+    LaunchedEffect(downloadState) {
+        if (downloadState is DownloadState.Progress) {
+            rotation += 360f
+        }
+    }
     
     // Android fiziksel geri tuşu desteği
     BackHandler(enabled = true) {
@@ -86,7 +104,14 @@ fun UpdateScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        CircularProgressIndicator()
+                        Icon(
+                            imageVector = Icons.Default.SystemUpdate,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(80.dp)
+                                .rotate(rotationAngle),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text("Güncelleme kontrol ediliyor...")
                     }
@@ -172,7 +197,7 @@ private fun UpdateContent(
         Icon(
             imageVector = Icons.Default.SystemUpdate,
             contentDescription = null,
-            modifier = Modifier.size(80.dp),
+            modifier = Modifier.size(100.dp),
             tint = MaterialTheme.colorScheme.primary
         )
         
@@ -184,75 +209,73 @@ private fun UpdateContent(
                 "Yeni Sürüm Mevcut!" 
             else 
                 "En Güncel Sürüm",
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center
         )
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        // Sürüm bilgileri
+        // Sürüm notları - Öne çıkarıldı
+        if (updateInfo.releaseNotes.isNotBlank()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp)
+                ) {
+                    Text(
+                        text = "Sürüm Notları",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = updateInfo.releaseNotes,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+        
+        // Sürüm bilgileri - Küçültüldü
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = if (updateInfo.isUpdateAvailable)
-                    MaterialTheme.colorScheme.primaryContainer
-                else
-                    MaterialTheme.colorScheme.surface
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
                 VersionInfoRow(
-                    label = "Mevcut Sürüm",
+                    label = "Mevcut",
                     value = currentVersion,
                     icon = Icons.Default.PhoneAndroid
                 )
                 Divider(modifier = Modifier.padding(vertical = 8.dp))
                 VersionInfoRow(
-                    label = "Yeni Sürüm",
+                    label = "Yeni",
                     value = updateInfo.versionName,
                     icon = Icons.Default.NewReleases,
                     isHighlighted = updateInfo.isUpdateAvailable
                 )
-                if (updateInfo.publishedAt.isNotEmpty()) {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
-                    VersionInfoRow(
-                        label = "Yayınlanma",
-                        value = updateInfo.publishedAt.substringBefore("T"),
-                        icon = Icons.Default.CalendarToday
-                    )
-                }
             }
         }
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        // Sürüm notları
-        if (updateInfo.releaseNotes.isNotBlank()) {
-            Text(
-                text = "Sürüm Notları",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.align(Alignment.Start)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = updateInfo.releaseNotes,
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-        
         // İndirme durumu
         AnimatedVisibility(visible = downloadState is DownloadState.Progress) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalArrangement = Arrangement.Center
             ) {
                 val progress = (downloadState as? DownloadState.Progress)?.percent ?: 0
                 LinearProgressIndicator(
@@ -260,7 +283,7 @@ private fun UpdateContent(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("İndiriliyor... %$progress")
+                Text("İndiriliyor... %$progress", fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
@@ -358,9 +381,9 @@ private fun VersionInfoRow(
                 MaterialTheme.colorScheme.primary 
             else 
                 MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(20.dp)
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(8.dp))
         Column {
             Text(
                 text = label,
@@ -369,7 +392,8 @@ private fun VersionInfoRow(
             )
             Text(
                 text = value,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal,
                 color = if (isHighlighted) 
                     MaterialTheme.colorScheme.primary 
                 else 
@@ -379,7 +403,6 @@ private fun VersionInfoRow(
     }
 }
 
-// Basit AlertDialog versiyonu (daha küçük kullanım için)
 @Composable
 fun UpdateDialog(
     updateInfo: UpdateInfo,
