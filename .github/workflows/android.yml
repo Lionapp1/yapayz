@@ -14,6 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set Version Info
+        id: version
+        run: |
+          VERSION_CODE=${{ github.run_number }}
+          VERSION_NAME="1.0.${{ github.run_number }}"
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "version_code=$VERSION_CODE" >> $GITHUB_OUTPUT
+          echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "Version Code: $VERSION_CODE"
+          echo "Version Name: $VERSION_NAME"
 
       - uses: actions/setup-java@v4
         with:
@@ -59,16 +73,20 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          VERSION_CODE: ${{ env.VERSION_CODE }}
+          VERSION_NAME: ${{ env.VERSION_NAME }}
         run: |
-          echo "Environment variables:"
+          echo "Building version ${VERSION_NAME} (${VERSION_CODE})"
           echo "KEYSTORE_PATH=$KEYSTORE_PATH"
-          echo "KEY_ALIAS=$KEY_ALIAS"
-          test -f "$KEYSTORE_PATH" && echo "Keystore file exists" || echo "Keystore file NOT FOUND"
-          ./gradlew assembleRelease --no-daemon --stacktrace
+          test -f "$KEYSTORE_PATH" && echo "Keystore OK" || echo "Keystore NOT FOUND"
+          ./gradlew assembleRelease -PversionCode=$VERSION_CODE -PversionName=$VERSION_NAME --no-daemon --stacktrace
 
       - name: Build Android App (Debug - Unsigned)
         if: steps.decode_keystore.outputs.has_keystore != 'true'
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+        env:
+          VERSION_CODE: ${{ env.VERSION_CODE }}
+          VERSION_NAME: ${{ env.VERSION_NAME }}
+        run: ./gradlew assembleDebug -PversionCode=$VERSION_CODE -PversionName=$VERSION_NAME --no-daemon --stacktrace
 
       - name: Locate APK
         id: apk
@@ -92,14 +110,15 @@ jobs:
           git log --oneline -10 --no-decorate >> release_notes.md
           echo "" >> release_notes.md
           echo "### 🆕 Bu Sürümde Neler Var?" >> release_notes.md
+          echo "- ✅ Otomatik sürüm güncelleme sistemi" >> release_notes.md
           echo "- ✅ APK imzalama tamamlandı" >> release_notes.md
           echo "- ✅ DEX Editor Plus geliştirildi" >> release_notes.md
           echo "- ✅ Text Editor eklendi" >> release_notes.md
           echo "- ✅ Smali ve XML syntax highlighting" >> release_notes.md
           echo "- ✅ Hızlı arama ve gezinme" >> release_notes.md
-          echo "- ✅ Hafıza ve performans optimizasyonları" >> release_notes.md
           echo "" >> release_notes.md
           echo "### 📱 APK Bilgileri" >> release_notes.md
+          echo "- **Sürüm:** ${{ env.VERSION_NAME }} (${{ env.VERSION_CODE }})" >> release_notes.md
           echo "- **Paket Adı:** com.apkpro.editor" >> release_notes.md
           echo "- **Min SDK:** 26 (Android 8.0)" >> release_notes.md
           echo "- **Target SDK:** 34 (Android 14)" >> release_notes.md
@@ -114,7 +133,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ github.run_number }}
-          name: apkeditor pro v${{ github.run_number }}
+          tag_name: v${{ steps.version.outputs.version_name }}
+          name: apkeditor pro v${{ steps.version.outputs.version_name }}
           body_path: release_notes.md
           files: ${{ steps.apk.outputs.path }}

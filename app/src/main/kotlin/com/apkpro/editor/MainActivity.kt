@@ -152,6 +152,11 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                        is MainViewModel.UiState.Update -> {
+                            UpdateScreen(
+                                onNavigateBack = { viewModel.navigateBack() }
+                            )
+                        }
                     }
                 }
             }

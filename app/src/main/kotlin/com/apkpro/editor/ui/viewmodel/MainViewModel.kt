@@ -218,8 +218,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         object ArscViewer : UiState()
         object ManifestViewer : UiState()
         object Converter : UiState()
-        object FileBrowser : UiState()      // Yeni: Dosya gezgini
-        object DexEditor : UiState()       // Yeni: DEX Editör Plus
-        object TextEditor : UiState()      // Yeni: Metin editörü
+        object FileBrowser : UiState()
+        object DexEditor : UiState()
+        object TextEditor : UiState()
+        object Update : UiState()          // Yeni: Güncelleme ekranı
+    }
+    
+    fun openUpdateScreen() {
+        navigateTo(UiState.Update)
     }
 }

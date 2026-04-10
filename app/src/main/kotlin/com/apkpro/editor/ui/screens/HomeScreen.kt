@@ -57,6 +57,9 @@ fun HomeScreen(viewModel: MainViewModel) {
                     titleContentColor = Color.White
                 ),
                 actions = {
+                    IconButton(onClick = { viewModel.openUpdateScreen() }) {
+                        Icon(Icons.Default.SystemUpdate, contentDescription = "Güncelleme", tint = Color.White)
+                    }
                     IconButton(onClick = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) }) {
                         Icon(Icons.Default.FolderOpen, contentDescription = "APK Aç", tint = Color.White)
                     }
@@ -73,6 +76,7 @@ fun HomeScreen(viewModel: MainViewModel) {
                     recentFiles = recentFiles,
                     onSelectApk = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) },
                     onRecentClick = { viewModel.openApkFromPath(it.path) },
+                    onUpdateClick = { viewModel.openUpdateScreen() },
                     modifier = Modifier.padding(padding)
                 )
             }
@@ -130,6 +134,11 @@ fun HomeScreen(viewModel: MainViewModel) {
             is MainViewModel.UiState.FileBrowser -> {
                 // Handled in MainActivity
             }
+            is MainViewModel.UiState.Update -> {
+                UpdateScreen(
+                    onNavigateBack = { viewModel.navigateBack() }
+                )
+            }
             is MainViewModel.UiState.DexEditor -> {
                 // Handled in MainActivity
             }
@@ -142,6 +151,7 @@ fun HomeScreen(viewModel: MainViewModel) {
                     recentFiles = recentFiles,
                     onSelectApk = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) },
                     onRecentClick = { viewModel.openApkFromPath(it.path) },
+                    onUpdateClick = { viewModel.openUpdateScreen() },
                     modifier = Modifier.padding(padding)
                 )
             }
@@ -180,6 +190,7 @@ private fun HomeContent(
     recentFiles: List<ApkInfo>,
     onSelectApk: () -> Unit,
     onRecentClick: (ApkInfo) -> Unit,
+    onUpdateClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -245,6 +256,43 @@ private fun HomeContent(
             FeatureItem(Icons.Default.Code, "DEX Görüntüle", "Smali/Java")
             FeatureItem(Icons.Default.Settings, "ARSC Parser", "Kaynaklar")
             FeatureItem(Icons.Default.Transform, "Dönüştürücü", "APK/AAB")
+        }
+        
+        // Güncelleme kartı
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+                .clickable { onUpdateClick() },
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SystemUpdate,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.size(40.dp)
+                )
+                Spacer(Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "Güncelleme Kontrolü",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        "Yeni sürüm varsa hemen indir",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    )
+                }
+                Icon(Icons.Default.ChevronRight, contentDescription = null)
+            }
         }
         
         // Son dosyalar

@@ -8,12 +8,18 @@ android {
     namespace = "com.apkpro.editor"
     compileSdk = 34
 
+    // Version from CI/CD or defaults
+    val versionCodeProp = (project.findProperty("versionCode") as? String)?.toIntOrNull() ?: 1
+    val versionNameProp = (project.findProperty("versionName") as? String) ?: "1.0.0"
+    
+    logger.lifecycle("BUILD: versionCode=$versionCodeProp, versionName=$versionNameProp")
+    
     defaultConfig {
         applicationId = "com.apkpro.editor"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = versionCodeProp
+        versionName = versionNameProp
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
