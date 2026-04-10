@@ -1,5 +1,6 @@
 package com.redex.pro.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,6 +25,11 @@ fun ManifestViewerScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Android fiziksel geri tuşu desteği
+    BackHandler(enabled = true) {
+        onBack()
+    }
+    
     Scaffold(
         topBar = {
             TopAppBar(

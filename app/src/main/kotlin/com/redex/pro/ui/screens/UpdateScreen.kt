@@ -1,5 +1,6 @@
 package com.redex.pro.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -36,6 +37,11 @@ fun UpdateScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
     val downloadState by updateManager.downloadState.collectAsState()
+    
+    // Android fiziksel geri tuşu desteği
+    BackHandler(enabled = true) {
+        onNavigateBack()
+    }
     
     // İlk açılışta güncelleme kontrolü
     LaunchedEffect(Unit) {

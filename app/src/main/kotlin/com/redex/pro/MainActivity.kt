@@ -235,9 +235,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
-                            }
-                        }
-                    }
+                }
                     
                     // Bottom Navigation - Ana ekranlarda göster
                     val showBottomNav = viewModel.canShowBottomNav()

@@ -1,5 +1,6 @@
 package com.redex.pro.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -69,6 +70,11 @@ fun TextEditorScreen(
             if (searchQuery.isEmpty()) true
             else line.contains(searchQuery, ignoreCase = true)
         }
+    }
+    
+    // Android fiziksel geri tuşu desteği
+    BackHandler(enabled = true) {
+        onBack()
     }
     
     Scaffold(

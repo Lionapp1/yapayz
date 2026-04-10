@@ -1,5 +1,6 @@
 package com.redex.pro.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -27,6 +28,11 @@ fun ConverterScreen(
     var selectedMode by remember { mutableIntStateOf(0) }
     var isProcessing by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<String?>(null) }
+    
+    // Android fiziksel geri tuşu desteği
+    BackHandler(enabled = true) {
+        onBack()
+    }
     
     Scaffold(
         topBar = {
