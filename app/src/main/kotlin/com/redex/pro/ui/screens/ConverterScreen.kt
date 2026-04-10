@@ -1,6 +1,7 @@
 package com.redex.pro.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -138,11 +139,12 @@ fun ConverterScreen(
                                 ), "ReDexPro_Output")
                                 outputDir.mkdirs()
                                 
+                                val nameWithoutExt = apk.name.substringBeforeLast(".apk", apk.name)
                                 val outputFile = when (selectedMode) {
-                                    0 -> File(outputDir, "${apk.nameWithoutExtension}.aab")
-                                    1 -> File(outputDir, "${apk.nameWithoutExtension}_converted.apk")
-                                    2 -> File(outputDir, "${apk.nameWithoutExtension}_split")
-                                    else -> File(outputDir, "${apk.nameWithoutExtension}_converted.apk")
+                                    0 -> File(outputDir, "${nameWithoutExt}.aab")
+                                    1 -> File(outputDir, "${nameWithoutExt}_converted.apk")
+                                    2 -> File(outputDir, "${nameWithoutExt}_split")
+                                    else -> File(outputDir, "${nameWithoutExt}_converted.apk")
                                 }
                                 
                                 // Dosyayı kopyala (gerçek dönüştürme için daha fazla işlem gerekir)
