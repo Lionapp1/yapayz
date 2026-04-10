@@ -26,6 +26,8 @@ import com.redex.pro.ui.screens.*
 import com.redex.pro.ui.theme.ReDexProTheme
 import android.content.SharedPreferences
 import com.redex.pro.ui.viewmodel.MainViewModel
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import java.io.File
@@ -116,8 +118,21 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         else -> {
-                            // Ana navigasyon
-                            when (uiState) {
+                            // Ana navigasyon - animasyonlu geçişler
+                            AnimatedContent(
+                                targetState = uiState,
+                                transitionSpec = {
+                                    slideInHorizontally(
+                                        initialOffsetX = { it },
+                                        animationSpec = tween(300)
+                                    ) with slideOutHorizontally(
+                                        targetOffsetX = { -it },
+                                        animationSpec = tween(300)
+                                    )
+                                },
+                                label = "navigation"
+                            ) { targetState ->
+                                when (targetState) {
                         is MainViewModel.UiState.Home -> {
                             HomeScreen(viewModel = viewModel)
                         }
@@ -146,11 +161,11 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         is MainViewModel.UiState.DexEditor -> {
-                            DexEditorPlusScreen(
+                            DexEditorProScreen(
                                 dexFiles = dexFilesWithClasses,
                                 onBack = { viewModel.navigateBack() },
                                 onClassClick = { dex, classInfo ->
-                                    // TODO: Smali görüntüleyici aç
+                                    // TODO: Smali editör aç
                                 }
                             )
                         }
@@ -159,7 +174,7 @@ class MainActivity : ComponentActivity() {
                                 val content = selectedFileContent?.let { 
                                     String(it, charset("UTF-8")) 
                                 } ?: ""
-                                TextEditorScreen(
+                                TextEditorProScreen(
                                     fileEntry = file,
                                     content = content,
                                     onBack = { viewModel.navigateBack() },
@@ -205,6 +220,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                            }
                         }
                     }
                 }

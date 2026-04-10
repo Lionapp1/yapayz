@@ -21,6 +21,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<UiState>(UiState.Home)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
     
+    // Navigasyon geçmişi - geri tuşu için
+    private val _navigationHistory = mutableListOf<UiState>()
+    private val maxHistorySize = 10
+    
     private val _currentApk = MutableStateFlow<ApkInfo?>(null)
     val currentApk: StateFlow<ApkInfo?> = _currentApk.asStateFlow()
     
@@ -94,26 +98,43 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     fun navigateTo(state: UiState) {
+        // Mevcut state'i geçmişe ekle
+        val currentState = _uiState.value
+        if (currentState != state && currentState !is UiState.Home) {
+            _navigationHistory.add(currentState)
+            if (_navigationHistory.size > maxHistorySize) {
+                _navigationHistory.removeAt(0)
+            }
+        }
         _uiState.value = state
     }
     
     fun navigateBack() {
-        _uiState.value = when (_uiState.value) {
-            is UiState.ApkDetail -> UiState.Home
-            is UiState.DexViewer -> UiState.ApkDetail
-            is UiState.ArscViewer -> UiState.ApkDetail
-            is UiState.ManifestViewer -> UiState.ApkDetail
-            is UiState.Converter -> UiState.ApkDetail
-            is UiState.FileBrowser -> UiState.ApkDetail
-            is UiState.DexEditor -> UiState.FileBrowser
-            is UiState.TextEditor -> UiState.FileBrowser
-            else -> UiState.Home
+        // Geçmişten geri al
+        if (_navigationHistory.isNotEmpty()) {
+            val previousState = _navigationHistory.removeAt(_navigationHistory.size - 1)
+            _uiState.value = previousState
+        } else {
+            // Geçmiş boşsa default davranış
+            _uiState.value = when (_uiState.value) {
+                is UiState.ApkDetail -> UiState.Home
+                is UiState.DexViewer -> UiState.ApkDetail
+                is UiState.ArscViewer -> UiState.ApkDetail
+                is UiState.ManifestViewer -> UiState.ApkDetail
+                is UiState.Converter -> UiState.ApkDetail
+                is UiState.FileBrowser -> UiState.ApkDetail
+                is UiState.DexEditor -> UiState.FileBrowser
+                is UiState.TextEditor -> UiState.FileBrowser
+                is UiState.Update -> UiState.Home
+                else -> UiState.Home
+            }
         }
     }
     
     fun goHome() {
         _uiState.value = UiState.Home
         _currentApk.value = null
+        _navigationHistory.clear() // Geçmişi temizle
     }
     
     fun clearError() {
