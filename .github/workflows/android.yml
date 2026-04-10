@@ -40,13 +40,25 @@ jobs:
         run: ./gradlew testDebugUnitTest --continue
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug
+        run: |
+          ./gradlew assembleDebug
+          echo "Build finished. Listing all files:"
+          ls -la
+          echo "=== Looking for APK ==="
+          find . -name "*.apk" 2>/dev/null || echo "No APK found in project"
+          echo "=== Build directory ==="
+          ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "Debug dir not found"
 
       - name: Check APK
         run: |
-          echo "=== APK Files ==="
-          find app/build -name "*.apk" -exec ls -lh {} \;
-          echo "================"
+          APK_PATH=$(find . -name "*.apk" -type f | head -1)
+          if [ -z "$APK_PATH" ]; then
+            echo "ERROR: No APK file found!"
+            exit 1
+          fi
+          echo "Found APK: $APK_PATH"
+          ls -lh "$APK_PATH"
+          echo "apk_path=$APK_PATH" >> $GITHUB_ENV
 
       - name: Upload to Release
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -67,7 +79,6 @@ jobs:
             
             📱 Kurulum:
             APK dosyasını indirip Android cihazınıza kurun.
-          files: app/build/outputs/apk/debug/*.apk
-          generate_release_notes: false
+          files: ${{ env.apk_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
