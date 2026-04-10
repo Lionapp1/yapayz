@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.apkpro.editor.updater.AppUpdater
 import com.apkpro.editor.updater.DownloadState
 import com.apkpro.editor.updater.UpdateInfo
@@ -36,7 +35,7 @@ fun UpdateScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
-    val downloadState by updateManager.downloadState.collectAsStateWithLifecycle()
+    val downloadState by updateManager.downloadState.collectAsState()
     
     // İlk açılışta güncelleme kontrolü
     LaunchedEffect(Unit) {
