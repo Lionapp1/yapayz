@@ -275,13 +275,4 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         navigateTo(UiState.Update)
     }
     
-    // Bottom navigation için ana ekranlar
-    fun canShowBottomNav(): Boolean {
-        return when (_uiState.value) {
-            is UiState.Home, 
-            is UiState.ApkDetail, 
-            is UiState.FileBrowser -> true
-            else -> false
-        }
-    }
 }

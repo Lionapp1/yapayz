@@ -3,17 +3,15 @@ package com.redex.pro
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
@@ -21,10 +19,7 @@ import com.redex.pro.ui.screens.*
 import com.redex.pro.ui.theme.ReDexProTheme
 import android.content.SharedPreferences
 import com.redex.pro.ui.viewmodel.MainViewModel
-import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
 
-@OptIn(ExperimentalAnimationApi::class)
 class MainActivity : ComponentActivity() {
     
     private lateinit var prefs: SharedPreferences
@@ -59,7 +54,6 @@ class MainActivity : ComponentActivity() {
                     val selectedFile by viewModel.selectedFile.collectAsState()
                     val selectedFileContent by viewModel.selectedFileContent.collectAsState()
                     
-                    // Gelen intent ile APK açma
                     LaunchedEffect(intent) {
                         if (intent.action == Intent.ACTION_VIEW) {
                             intent.data?.let { uri ->
@@ -68,7 +62,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     
-                    // Onboarding ve Permission kontrolü
                     var showWelcome by remember { mutableStateOf(isFirstTime) }
                     var showPermission by remember { mutableStateOf(false) }
                     var permissionChecked by remember { mutableStateOf(false) }
@@ -104,137 +97,107 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         else -> {
-                            // Ana navigasyon
-                            AnimatedContent(
-                                targetState = uiState,
-                                transitionSpec = {
-                                    slideInHorizontally(
-                                        initialOffsetX = { it },
-                                        animationSpec = tween(300)
-                                    ) with slideOutHorizontally(
-                                        targetOffsetX = { -it },
-                                        animationSpec = tween(300)
-                                    )
-                                },
-                                label = "navigation"
-                            ) { targetState ->
-                                when (targetState) {
-                                    is MainViewModel.UiState.Home -> {
-                                        HomeScreen(viewModel = viewModel)
-                                    }
-                                    is MainViewModel.UiState.ApkDetail -> {
-                                        currentApk?.let { apk ->
-                                            ApkDetailScreen(
-                                                apk = apk,
-                                                onBack = { viewModel.goHome() },
-                                                onViewDex = { viewModel.navigateTo(MainViewModel.UiState.DexViewer) },
-                                                onViewArsc = { viewModel.navigateTo(MainViewModel.UiState.ArscViewer) },
-                                                onViewManifest = { viewModel.navigateTo(MainViewModel.UiState.ManifestViewer) },
-                                                onViewConverter = { viewModel.navigateTo(MainViewModel.UiState.Converter) },
-                                                onOpenFileBrowser = { viewModel.openFileBrowser() },
-                                                onOpenDexEditor = { viewModel.openDexEditor() }
-                                            )
-                                        }
-                                    }
-                                    is MainViewModel.UiState.FileBrowser -> {
-                                        apkStructure?.let { structure ->
-                                            FileBrowserScreen(
-                                                structure = structure,
-                                                onBack = { viewModel.navigateBack() },
-                                                onFileClick = { file -> viewModel.openFile(file) },
-                                                onDexEditorClick = { viewModel.openDexEditor() }
-                                            )
-                                        }
-                                    }
-                                    is MainViewModel.UiState.DexEditor -> {
-                                        DexEditorProScreen(
-                                            dexFiles = dexFilesWithClasses,
-                                            onBack = { viewModel.navigateBack() },
-                                            onClassClick = { _, _ -> },
-                                            onViewSmali = { dex, classInfo ->
-                                                viewModel.openSmaliViewer(dex, classInfo)
-                                            }
-                                        )
-                                    }
-                                    is MainViewModel.UiState.SmaliViewer -> {
-                                        val selectedClass by viewModel.selectedClass.collectAsState()
-                                        val smaliContent by viewModel.smaliContent.collectAsState()
-                                        selectedClass?.let { classInfo ->
-                                            SmaliViewerScreen(
-                                                className = classInfo.name,
-                                                smaliCode = smaliContent,
-                                                onBack = { viewModel.navigateBack() }
-                                            )
-                                        }
-                                    }
-                                    is MainViewModel.UiState.TextEditor -> {
-                                        selectedFile?.let { file ->
-                                            val content = selectedFileContent?.let { 
-                                                String(it, charset("UTF-8")) 
-                                            } ?: ""
-                                            TextEditorScreen(
-                                                fileEntry = file,
-                                                content = content,
-                                                onBack = { viewModel.navigateBack() },
-                                                onSave = { newContent -> 
-                                                    viewModel.saveFileChanges(newContent) 
-                                                }
-                                            )
-                                        }
-                                    }
-                                    is MainViewModel.UiState.DexViewer -> {
-                                        currentApk?.let { apk ->
-                                            DexViewerScreen(
-                                                dexFiles = apk.dexFiles,
-                                                onBack = { viewModel.navigateBack() }
-                                            )
-                                        }
-                                    }
-                                    is MainViewModel.UiState.ArscViewer -> {
-                                        currentApk?.let { apk ->
-                                            ArscViewerScreen(
-                                                resources = apk.resources,
-                                                onBack = { viewModel.navigateBack() }
-                                            )
-                                        }
-                                    }
-                                    is MainViewModel.UiState.ManifestViewer -> {
-                                        currentApk?.let { apk ->
-                                            ManifestViewerScreen(
-                                                manifest = apk.manifest,
-                                                onBack = { viewModel.navigateBack() }
-                                            )
-                                        }
-                                    }
-                                    is MainViewModel.UiState.Converter -> {
-                                        currentApk?.let { apk ->
-                                            ConverterScreen(
-                                                apk = apk,
-                                                onBack = { viewModel.navigateBack() }
-                                            )
-                                        }
-                                    }
-                                    is MainViewModel.UiState.Update -> {
-                                        UpdateScreen(
-                                            onNavigateBack = { viewModel.navigateBack() }
+                            when (uiState) {
+                                is MainViewModel.UiState.Home -> {
+                                    HomeScreen(viewModel = viewModel)
+                                }
+                                is MainViewModel.UiState.ApkDetail -> {
+                                    currentApk?.let { apk ->
+                                        ApkDetailScreen(
+                                            apk = apk,
+                                            onBack = { viewModel.goHome() },
+                                            onViewDex = { viewModel.navigateTo(MainViewModel.UiState.DexViewer) },
+                                            onViewArsc = { viewModel.navigateTo(MainViewModel.UiState.ArscViewer) },
+                                            onViewManifest = { viewModel.navigateTo(MainViewModel.UiState.ManifestViewer) },
+                                            onViewConverter = { viewModel.navigateTo(MainViewModel.UiState.Converter) },
+                                            onOpenFileBrowser = { viewModel.openFileBrowser() },
+                                            onOpenDexEditor = { viewModel.openDexEditor() }
                                         )
                                     }
                                 }
-                            }
-                            
-                            // Bottom Navigation
-                            if (viewModel.canShowBottomNav()) {
-                                BottomNavigation(
-                                    currentState = uiState,
-                                    onNavigate = { state ->
-                                        when (state) {
-                                            is MainViewModel.UiState.Home -> viewModel.goHome()
-                                            is MainViewModel.UiState.ApkDetail -> viewModel.navigateTo(MainViewModel.UiState.ApkDetail)
-                                            is MainViewModel.UiState.FileBrowser -> viewModel.openFileBrowser()
-                                            else -> {}
-                                        }
+                                is MainViewModel.UiState.FileBrowser -> {
+                                    apkStructure?.let { structure ->
+                                        FileBrowserScreen(
+                                            structure = structure,
+                                            onBack = { viewModel.navigateBack() },
+                                            onFileClick = { file -> viewModel.openFile(file) },
+                                            onDexEditorClick = { viewModel.openDexEditor() }
+                                        )
                                     }
-                                )
+                                }
+                                is MainViewModel.UiState.DexEditor -> {
+                                    DexEditorProScreen(
+                                        dexFiles = dexFilesWithClasses,
+                                        onBack = { viewModel.navigateBack() },
+                                        onClassClick = { _, _ -> },
+                                        onViewSmali = { dex, classInfo ->
+                                            viewModel.openSmaliViewer(dex, classInfo)
+                                        }
+                                    )
+                                }
+                                is MainViewModel.UiState.SmaliViewer -> {
+                                    val selectedClass by viewModel.selectedClass.collectAsState()
+                                    val smaliContent by viewModel.smaliContent.collectAsState()
+                                    selectedClass?.let { classInfo ->
+                                        SmaliViewerScreen(
+                                            className = classInfo.name,
+                                            smaliCode = smaliContent,
+                                            onBack = { viewModel.navigateBack() }
+                                        )
+                                    }
+                                }
+                                is MainViewModel.UiState.TextEditor -> {
+                                    selectedFile?.let { file ->
+                                        val content = selectedFileContent?.let { 
+                                            String(it, charset("UTF-8")) 
+                                        } ?: ""
+                                        TextEditorProScreen(
+                                            fileEntry = file,
+                                            content = content,
+                                            onBack = { viewModel.navigateBack() },
+                                            onSave = { newContent -> 
+                                                viewModel.saveFileChanges(newContent) 
+                                            }
+                                        )
+                                    }
+                                }
+                                is MainViewModel.UiState.DexViewer -> {
+                                    currentApk?.let { apk ->
+                                        DexViewerScreen(
+                                            dexFiles = apk.dexFiles,
+                                            onBack = { viewModel.navigateBack() }
+                                        )
+                                    }
+                                }
+                                is MainViewModel.UiState.ArscViewer -> {
+                                    currentApk?.let { apk ->
+                                        ArscViewerScreen(
+                                            resources = apk.resources,
+                                            onBack = { viewModel.navigateBack() }
+                                        )
+                                    }
+                                }
+                                is MainViewModel.UiState.ManifestViewer -> {
+                                    currentApk?.let { apk ->
+                                        ManifestViewerScreen(
+                                            manifest = apk.manifest,
+                                            onBack = { viewModel.navigateBack() }
+                                        )
+                                    }
+                                }
+                                is MainViewModel.UiState.Converter -> {
+                                    currentApk?.let { apk ->
+                                        ConverterScreen(
+                                            apk = apk,
+                                            onBack = { viewModel.navigateBack() }
+                                        )
+                                    }
+                                }
+                                is MainViewModel.UiState.Update -> {
+                                    UpdateScreen(
+                                        onNavigateBack = { viewModel.navigateBack() }
+                                    )
+                                }
                             }
                         }
                     }
@@ -280,32 +243,5 @@ class MainActivity : ComponentActivity() {
         if (needPermissions.isNotEmpty()) {
             requestPermissionLauncher.launch(needPermissions.toTypedArray())
         }
-    }
-}
-
-@Composable
-fun BottomNavigation(
-    currentState: MainViewModel.UiState,
-    onNavigate: (MainViewModel.UiState) -> Unit
-) {
-    NavigationBar {
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Home, contentDescription = "Ana Sayfa") },
-            label = { Text("Ana Sayfa") },
-            selected = currentState is MainViewModel.UiState.Home,
-            onClick = { onNavigate(MainViewModel.UiState.Home) }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Info, contentDescription = "APK Detay") },
-            label = { Text("Detay") },
-            selected = currentState is MainViewModel.UiState.ApkDetail,
-            onClick = { onNavigate(MainViewModel.UiState.ApkDetail) }
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Folder, contentDescription = "Dosya Gezgini") },
-            label = { Text("Dosyalar") },
-            selected = currentState is MainViewModel.UiState.FileBrowser,
-            onClick = { onNavigate(MainViewModel.UiState.FileBrowser) }
-        )
     }
 }

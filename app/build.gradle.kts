@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.redex.pro"
-    compileSdk = 34
+    compileSdk = 33
 
     // Version from CI/CD or defaults
     val versionCodeProp = (project.findProperty("versionCode") as? String)?.toIntOrNull() ?: 1
@@ -17,7 +17,7 @@ android {
     defaultConfig {
         applicationId = "com.redex.pro"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 33
         versionCode = versionCodeProp
         versionName = versionNameProp
 
