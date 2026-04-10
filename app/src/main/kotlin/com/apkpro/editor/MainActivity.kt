@@ -23,13 +23,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.apkpro.editor.ui.screens.*
-import com.apkpro.editor.ui.theme.APKProEditorTheme
+import com.apkpro.editor.ui.theme.ReDexProTheme
+import android.content.SharedPreferences
 import com.apkpro.editor.ui.viewmodel.MainViewModel
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import java.io.File
 
 class MainActivity : ComponentActivity() {
+    
+    private lateinit var prefs: SharedPreferences
     
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -44,10 +47,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        checkPermissions()
+        prefs = getSharedPreferences("redexpro_prefs", MODE_PRIVATE)
+        val isFirstTime = prefs.getBoolean("first_time", true)
+        val hasPermissions = checkPermissionsGranted()
         
         setContent {
-            APKProEditorTheme {
+            ReDexProTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -69,8 +74,36 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     
-                    // Ana navigasyon
-                    when (uiState) {
+                    // Onboarding ve Permission kontrolü
+                    var showWelcome by remember { mutableStateOf(isFirstTime) }
+                    var showPermission by remember { mutableStateOf(!hasPermissions && !isFirstTime) }
+                    
+                    when {
+                        showWelcome -> {
+                            WelcomeScreen(
+                                onFinish = {
+                                    prefs.edit().putBoolean("first_time", false).apply()
+                                    showWelcome = false
+                                    if (!hasPermissions) {
+                                        showPermission = true
+                                    }
+                                }
+                            )
+                        }
+                        showPermission -> {
+                            PermissionScreen(
+                                onPermissionsGranted = {
+                                    checkPermissions()
+                                    showPermission = false
+                                },
+                                onSkip = {
+                                    showPermission = false
+                                }
+                            )
+                        }
+                        else -> {
+                            // Ana navigasyon
+                            when (uiState) {
                         is MainViewModel.UiState.Home -> {
                             HomeScreen(viewModel = viewModel)
                         }
@@ -158,8 +191,29 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                        }
+                    }
                 }
             }
+        }
+    }
+    
+    private fun checkPermissionsGranted(): Boolean {
+        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(
+                Manifest.permission.READ_MEDIA_VIDEO,
+                Manifest.permission.READ_MEDIA_IMAGES,
+                Manifest.permission.READ_MEDIA_AUDIO
+            )
+        } else {
+            arrayOf(
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            )
+        }
+        
+        return permissions.all {
+            ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
         }
     }
     

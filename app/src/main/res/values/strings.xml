@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">APK Pro Editor</string>
-    <string name="app_slogan">Profesyonel APK Analiz ve Düzenleme</string>
+    <string name="app_name">ReDex Pro</string>
+    <string name="app_slogan">Profesyonel APK &amp; DEX Editör</string>
     
     <!-- Ana Ekran -->
     <string name="select_apk">APK Seç</string>
@@ -49,4 +49,32 @@
     <string name="error_parsing_dex">DEX ayrıştırma hatası</string>
     <string name="error_file_not_found">Dosya bulunamadı</string>
     <string name="error_permission_denied">İzin reddedildi</string>
+    
+    <!-- İzinler -->
+    <string name="permission_title">Dosya Erişimi Gerekli</string>
+    <string name="permission_message">APK dosyalarını analiz edebilmek için depolama iznine ihtiyacımız var. Bu izin sadece APK dosyalarını okumak ve kaydetmek için kullanılır.</string>
+    <string name="permission_grant">İzin Ver</string>
+    <string name="permission_later">Sonra</string>
+    
+    <!-- Güncelleme -->
+    <string name="update_available">Yeni Sürüm Mevcut!</string>
+    <string name="update_downloading">Güncelleme indiriliyor...</string>
+    <string name="update_install">Kurulumu Başlat</string>
+    <string name="update_later">Sonra Hatırlat</string>
+    
+    <!-- Hoşgeldiniz -->
+    <string name="welcome_title">ReDex Pro\'ya Hoş Geldiniz!</string>
+    <string name="welcome_desc">APK ve DEX dosyalarını profesyonel şekilde analiz edin, düzenleyin ve derleyin.</string>
+    <string name="welcome_start">Başlayalım</string>
+    
+    <!-- Genel -->
+    <string name="ok">Tamam</string>
+    <string name="cancel">İptal</string>
+    <string name="yes">Evet</string>
+    <string name="no">Hayır</string>
+    <string name="loading">Yükleniyor...</string>
+    <string name="success">Başarılı!</string>
+    <string name="error">Hata</string>
+    <string name="warning">Uyarı</string>
+    <string name="info">Bilgi</string>
 </resources>

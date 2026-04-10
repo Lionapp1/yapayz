@@ -47,7 +47,7 @@ fun HomeScreen(viewModel: MainViewModel) {
             TopAppBar(
                 title = { 
                     Text(
-                        "APK Pro Editor",
+                        "ReDex Pro",
                         fontWeight = FontWeight.Bold,
                         fontSize = 22.sp
                     )
@@ -212,13 +212,13 @@ private fun HomeContent(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "APK Pro Editor",
+                    "ReDex Pro",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
                 Text(
-                    "Profesyonel APK Analiz ve Düzenleme Aracı",
+                    "Profesyonel APK & DEX Editör",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                     textAlign = TextAlign.Center,

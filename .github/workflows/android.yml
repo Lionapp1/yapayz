@@ -134,6 +134,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.version_name }}
-          name: apkeditor pro v${{ steps.version.outputs.version_name }}
+          name: ReDex Pro v${{ steps.version.outputs.version_name }}
           body_path: release_notes.md
           files: ${{ steps.apk.outputs.path }}
