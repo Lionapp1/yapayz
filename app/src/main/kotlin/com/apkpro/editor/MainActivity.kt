@@ -22,9 +22,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import com.apkpro.editor.ui.screens.HomeScreen
+import com.apkpro.editor.ui.screens.*
 import com.apkpro.editor.ui.theme.APKProEditorTheme
 import com.apkpro.editor.ui.viewmodel.MainViewModel
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import java.io.File
 
 class MainActivity : ComponentActivity() {
     
@@ -50,6 +53,12 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val viewModel = remember { MainViewModel(application) }
+                    val uiState by viewModel.uiState.collectAsState()
+                    val currentApk by viewModel.currentApk.collectAsState()
+                    val apkStructure by viewModel.apkStructure.collectAsState()
+                    val dexFilesWithClasses by viewModel.dexFilesWithClasses.collectAsState()
+                    val selectedFile by viewModel.selectedFile.collectAsState()
+                    val selectedFileContent by viewModel.selectedFileContent.collectAsState()
                     
                     // Gelen intent ile APK açma
                     LaunchedEffect(intent) {
@@ -60,7 +69,90 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     
-                    HomeScreen(viewModel = viewModel)
+                    // Ana navigasyon
+                    when (uiState) {
+                        is MainViewModel.UiState.Home -> {
+                            HomeScreen(viewModel = viewModel)
+                        }
+                        is MainViewModel.UiState.ApkDetail -> {
+                            currentApk?.let { apk ->
+                                ApkDetailScreen(
+                                    apk = apk,
+                                    onBack = { viewModel.goHome() },
+                                    onViewDex = { viewModel.navigateTo(MainViewModel.UiState.DexViewer) },
+                                    onViewArsc = { viewModel.navigateTo(MainViewModel.UiState.ArscViewer) },
+                                    onViewManifest = { viewModel.navigateTo(MainViewModel.UiState.ManifestViewer) },
+                                    onViewConverter = { viewModel.navigateTo(MainViewModel.UiState.Converter) },
+                                    onOpenFileBrowser = { viewModel.openFileBrowser() },
+                                    onOpenDexEditor = { viewModel.openDexEditor() }
+                                )
+                            }
+                        }
+                        is MainViewModel.UiState.FileBrowser -> {
+                            apkStructure?.let { structure ->
+                                FileBrowserScreen(
+                                    structure = structure,
+                                    onBack = { viewModel.navigateBack() },
+                                    onFileClick = { file -> viewModel.openFile(file) },
+                                    onDexEditorClick = { viewModel.openDexEditor() }
+                                )
+                            }
+                        }
+                        is MainViewModel.UiState.DexEditor -> {
+                            DexEditorPlusScreen(
+                                dexFiles = dexFilesWithClasses,
+                                onBack = { viewModel.navigateBack() },
+                                onClassClick = { dex, classInfo ->
+                                    // TODO: Smali görüntüleyici aç
+                                }
+                            )
+                        }
+                        is MainViewModel.UiState.TextEditor -> {
+                            selectedFile?.let { file ->
+                                val content = selectedFileContent?.let { 
+                                    String(it, charset("UTF-8")) 
+                                } ?: ""
+                                TextEditorScreen(
+                                    fileEntry = file,
+                                    content = content,
+                                    onBack = { viewModel.navigateBack() },
+                                    onSave = { newContent -> viewModel.saveFileChanges(newContent) }
+                                )
+                            }
+                        }
+                        is MainViewModel.UiState.DexViewer -> {
+                            currentApk?.let { apk ->
+                                DexViewerScreen(
+                                    dexFiles = apk.dexFiles,
+                                    onBack = { viewModel.navigateBack() }
+                                )
+                            }
+                        }
+                        is MainViewModel.UiState.ArscViewer -> {
+                            currentApk?.let { apk ->
+                                ArscViewerScreen(
+                                    resources = apk.resources,
+                                    onBack = { viewModel.navigateBack() }
+                                )
+                            }
+                        }
+                        is MainViewModel.UiState.ManifestViewer -> {
+                            currentApk?.let { apk ->
+                                ManifestViewerScreen(
+                                    manifest = apk.manifest,
+                                    onBack = { viewModel.navigateBack() }
+                                )
+                            }
+                        }
+                        is MainViewModel.UiState.Converter -> {
+                            currentApk?.let { apk ->
+                                ConverterScreen(
+                                    apk = apk,
+                                    onBack = { viewModel.navigateBack() }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

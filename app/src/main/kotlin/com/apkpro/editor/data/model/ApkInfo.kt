@@ -91,3 +91,59 @@ data class PermissionInfo(
     val name: String,
     val protectionLevel: String = "normal"
 )
+
+// APK Dosya Gezgini için
+enum class ApkFileType {
+    DEX,
+    MANIFEST,
+    RESOURCE_ARSC,
+    XML_RESOURCE,
+    DRAWABLE,
+    LAYOUT,
+    ASSET,
+    LIBRARY,
+    CERTIFICATE,
+    META_INF,
+    RAW,
+    UNKNOWN
+}
+
+data class ApkFileEntry(
+    val path: String,
+    val name: String,
+    val size: Long,
+    val compressedSize: Long,
+    val crc: Long,
+    val type: ApkFileType,
+    val isDirectory: Boolean = false,
+    val canEdit: Boolean = false,
+    val canView: Boolean = true
+)
+
+data class ApkStructure(
+    val allFiles: List<ApkFileEntry> = emptyList(),
+    val rootFiles: List<ApkFileEntry> = emptyList(),
+    val dexFiles: List<ApkFileEntry> = emptyList(),
+    val manifest: ApkFileEntry? = null,
+    val resources: List<ApkFileEntry> = emptyList(),
+    val assets: List<ApkFileEntry> = emptyList(),
+    val libraries: List<ApkFileEntry> = emptyList(),
+    val certificates: List<ApkFileEntry> = emptyList()
+)
+
+// DEX Düzenleme için
+data class SmaliMethod(
+    val name: String,
+    val signature: String,
+    val access: String,
+    val code: String,
+    val lineCount: Int
+)
+
+data class SmaliClass(
+    val className: String,
+    val superClass: String,
+    val sourceFile: String?,
+    val smaliCode: String,
+    val methods: List<SmaliMethod>
+)

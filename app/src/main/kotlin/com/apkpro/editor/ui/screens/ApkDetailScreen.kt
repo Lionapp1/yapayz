@@ -24,7 +24,9 @@ fun ApkDetailScreen(
     onViewDex: () -> Unit,
     onViewArsc: () -> Unit,
     onViewManifest: () -> Unit,
-    onConvert: () -> Unit,
+    onViewConverter: () -> Unit,
+    onOpenFileBrowser: () -> Unit = {},
+    onOpenDexEditor: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -48,7 +50,13 @@ fun ApkDetailScreen(
                     navigationIconContentColor = Color.White
                 ),
                 actions = {
-                    IconButton(onClick = onConvert) {
+                    IconButton(onClick = onOpenFileBrowser) {
+                        Icon(Icons.Default.Folder, contentDescription = "Dosya Gezgini", tint = Color.White)
+                    }
+                    IconButton(onClick = onOpenDexEditor) {
+                        Icon(Icons.Default.Edit, contentDescription = "DEX Editör", tint = Color.White)
+                    }
+                    IconButton(onClick = onViewConverter) {
                         Icon(Icons.Default.Transform, contentDescription = "Dönüştür", tint = Color.White)
                     }
                 }

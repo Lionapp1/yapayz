@@ -7,13 +7,14 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.apkpro.editor.data.model.ApkInfo
+import com.apkpro.editor.data.model.*
 import com.apkpro.editor.data.parser.ApkParser
+import com.apkpro.editor.data.editor.ApkEditor
+import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.File
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     
@@ -33,6 +34,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val recentFiles: StateFlow<List<ApkInfo>> = _recentFiles.asStateFlow()
     
     private val apkParser = ApkParser(application)
+    private val apkEditor = ApkEditor(application)
+    
+    // Dosya Gezgini verileri
+    private val _apkStructure = MutableStateFlow<ApkStructure?>(null)
+    val apkStructure: StateFlow<ApkStructure?> = _apkStructure.asStateFlow()
+    
+    // DEX Editör verileri
+    private val _dexFilesWithClasses = MutableStateFlow<List<Pair<ApkFileEntry, List<ClassInfo>>>>(emptyList())
+    val dexFilesWithClasses: StateFlow<List<Pair<ApkFileEntry, List<ClassInfo>>>> = _dexFilesWithClasses.asStateFlow()
+    
+    // Seçili dosya
+    private val _selectedFile = MutableStateFlow<ApkFileEntry?>(null)
+    val selectedFile: StateFlow<ApkFileEntry?> = _selectedFile.asStateFlow()
+    
+    // Dosya içeriği
+    private val _selectedFileContent = MutableStateFlow<ByteArray?>(null)
+    val selectedFileContent: StateFlow<ByteArray?> = _selectedFileContent.asStateFlow()
     
     fun openApkFromUri(uri: Uri) {
         viewModelScope.launch {
@@ -75,20 +93,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun navigateToDexViewer() {
-        _uiState.value = UiState.DexViewer
-    }
-    
-    fun navigateToArscViewer() {
-        _uiState.value = UiState.ArscViewer
-    }
-    
-    fun navigateToManifestViewer() {
-        _uiState.value = UiState.ManifestViewer
-    }
-    
-    fun navigateToConverter() {
-        _uiState.value = UiState.Converter
+    fun navigateTo(state: UiState) {
+        _uiState.value = state
     }
     
     fun navigateBack() {
@@ -98,6 +104,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             is UiState.ArscViewer -> UiState.ApkDetail
             is UiState.ManifestViewer -> UiState.ApkDetail
             is UiState.Converter -> UiState.ApkDetail
+            is UiState.FileBrowser -> UiState.ApkDetail
+            is UiState.DexEditor -> UiState.FileBrowser
+            is UiState.TextEditor -> UiState.FileBrowser
             else -> UiState.Home
         }
     }
@@ -119,6 +128,89 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _recentFiles.value = current
     }
     
+    // ========== NAVİGASYON FONKSİYONLARI ==========
+    
+    fun openFileBrowser() {
+        _currentApk.value?.let { apk ->
+            viewModelScope.launch {
+                _isLoading.value = true
+                try {
+                    val structure = apkParser.getApkStructure(File(apk.path))
+                    _apkStructure.value = structure
+                    _dexFilesWithClasses.value = apkParser.getAllDexFilesWithClasses(File(apk.path))
+                    _uiState.value = UiState.FileBrowser
+                } catch (e: Exception) {
+                    _error.value = "Dosya gezgini açılırken hata: ${e.message}"
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+        }
+    }
+    
+    fun openDexEditor() {
+        _currentApk.value?.let { apk ->
+            viewModelScope.launch {
+                _isLoading.value = true
+                try {
+                    val dexFiles = apkParser.getAllDexFilesWithClasses(File(apk.path))
+                    _dexFilesWithClasses.value = dexFiles
+                    _uiState.value = UiState.DexEditor
+                } catch (e: Exception) {
+                    _error.value = "DEX editör açılırken hata: ${e.message}"
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+        }
+    }
+    
+    fun openFile(fileEntry: ApkFileEntry) {
+        _currentApk.value?.let { apk ->
+            viewModelScope.launch {
+                _isLoading.value = true
+                try {
+                    val content = apkParser.extractFileFromApk(File(apk.path), fileEntry.path)
+                    _selectedFile.value = fileEntry
+                    _selectedFileContent.value = content
+                    _uiState.value = UiState.TextEditor
+                } catch (e: Exception) {
+                    _error.value = "Dosya açılırken hata: ${e.message}"
+                } finally {
+                    _isLoading.value = false
+                }
+            }
+        }
+    }
+    
+    fun saveFileChanges(newContent: String) {
+        viewModelScope.launch {
+            _currentApk.value?.let { apk ->
+                _selectedFile.value?.let { file ->
+                    _isLoading.value = true
+                    try {
+                        val outputFile = File(apk.path + "_modified.apk")
+                        val success = apkEditor.editXmlFile(
+                            File(apk.path),
+                            file,
+                            newContent,
+                            outputFile
+                        )
+                        if (success) {
+                            _error.value = "Değişiklikler kaydedildi: ${outputFile.name}"
+                        } else {
+                            _error.value = "Kaydetme başarısız"
+                        }
+                    } catch (e: Exception) {
+                        _error.value = "Kaydetme hatası: ${e.message}"
+                    } finally {
+                        _isLoading.value = false
+                    }
+                }
+            }
+        }
+    }
+    
     sealed class UiState {
         object Home : UiState()
         object ApkDetail : UiState()
@@ -126,5 +218,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         object ArscViewer : UiState()
         object ManifestViewer : UiState()
         object Converter : UiState()
+        object FileBrowser : UiState()      // Yeni: Dosya gezgini
+        object DexEditor : UiState()       // Yeni: DEX Editör Plus
+        object TextEditor : UiState()      // Yeni: Metin editörü
     }
 }
