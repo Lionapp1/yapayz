@@ -81,10 +81,12 @@ fun HomeScreen(viewModel: MainViewModel) {
                     ApkDetailScreen(
                         apk = apk,
                         onBack = { viewModel.navigateBack() },
-                        onViewDex = { viewModel.navigateToDexViewer() },
-                        onViewArsc = { viewModel.navigateToArscViewer() },
-                        onViewManifest = { viewModel.navigateToManifestViewer() },
-                        onConvert = { viewModel.navigateToConverter() },
+                        onViewDex = { viewModel.navigateTo(MainViewModel.UiState.DexViewer) },
+                        onViewArsc = { viewModel.navigateTo(MainViewModel.UiState.ArscViewer) },
+                        onViewManifest = { viewModel.navigateTo(MainViewModel.UiState.ManifestViewer) },
+                        onViewConverter = { viewModel.navigateTo(MainViewModel.UiState.Converter) },
+                        onOpenFileBrowser = { viewModel.openFileBrowser() },
+                        onOpenDexEditor = { viewModel.openDexEditor() },
                         modifier = Modifier.padding(padding)
                     )
                 }
@@ -124,6 +126,24 @@ fun HomeScreen(viewModel: MainViewModel) {
                         modifier = Modifier.padding(padding)
                     )
                 }
+            }
+            is MainViewModel.UiState.FileBrowser -> {
+                // Handled in MainActivity
+            }
+            is MainViewModel.UiState.DexEditor -> {
+                // Handled in MainActivity
+            }
+            is MainViewModel.UiState.TextEditor -> {
+                // Handled in MainActivity
+            }
+            else -> {
+                // Unknown state - go home
+                HomeContent(
+                    recentFiles = recentFiles,
+                    onSelectApk = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) },
+                    onRecentClick = { viewModel.openApkFromPath(it.path) },
+                    modifier = Modifier.padding(padding)
+                )
             }
         }
         

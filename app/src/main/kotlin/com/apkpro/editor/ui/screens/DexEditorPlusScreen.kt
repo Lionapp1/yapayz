@@ -55,9 +55,9 @@ fun DexEditorPlusScreen(
                 title = {
                     Column {
                         Text("DEX Editör Plus")
-                        currentDex?.first?.let { dex ->
+                        currentDex?.let { (dex, classes) ->
                             Text(
-                                "${dex.name} - ${dex.second.size} sınıf",
+                                "${dex.name} - ${classes.size} sınıf",
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -247,6 +247,8 @@ private fun ClassEntryItem(
 
 // ========== SMALI KOD GÖRÜNTÜLEYİCİ ==========
 
+enum class SmaliViewMode { SMALI, JAVA, BYTECODE }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SmaliViewerScreen(
@@ -255,9 +257,7 @@ fun SmaliViewerScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedMethodIndex by remember { mutableIntStateOf(-1) }
-    var viewMode by remember { mutableStateOf(ViewMode.SMALI) }
-    
-    enum class ViewMode { SMALI, JAVA, BYTECODE }
+    var viewMode by remember { mutableStateOf(SmaliViewMode.SMALI) }
     
     Scaffold(
         topBar = {
@@ -334,9 +334,10 @@ fun SmaliViewerScreen(
                     ) {
                         Text(
                             text = when (viewMode) {
-                                ViewMode.SMALI -> "Smali Kod"
-                                ViewMode.JAVA -> "Java (Tahmini)"
-                                ViewMode.BYTECODE -> "Bytecode"
+                                SmaliViewMode.SMALI -> "Smali Kod"
+                                SmaliViewMode.JAVA -> "Java (Tahmini)"
+                                SmaliViewMode.BYTECODE -> "Bytecode"
+                                else -> "Smali Kod"
                             },
                             style = MaterialTheme.typography.titleSmall
                         )
@@ -399,8 +400,8 @@ private fun MethodListItem(
 
 @Composable
 private fun DropdownMenuContent(
-    currentMode: DexEditorPlusScreen.ViewMode,
-    onModeChange: (DexEditorPlusScreen.ViewMode) -> Unit
+    currentMode: SmaliViewMode,
+    onModeChange: (SmaliViewMode) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     
@@ -415,21 +416,21 @@ private fun DropdownMenuContent(
         DropdownMenuItem(
             text = { Text("Smali") },
             onClick = { 
-                onModeChange(DexEditorPlusScreen.ViewMode.SMALI)
+                onModeChange(SmaliViewMode.SMALI)
                 expanded = false
             }
         )
         DropdownMenuItem(
             text = { Text("Java") },
             onClick = { 
-                onModeChange(DexEditorPlusScreen.ViewMode.JAVA)
+                onModeChange(SmaliViewMode.JAVA)
                 expanded = false
             }
         )
         DropdownMenuItem(
             text = { Text("Bytecode") },
             onClick = { 
-                onModeChange(DexEditorPlusScreen.ViewMode.BYTECODE)
+                onModeChange(SmaliViewMode.BYTECODE)
                 expanded = false
             }
         )
