@@ -30,25 +30,29 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > release.keystore
-            echo "has_keystore=true" >> $GITHUB_ENV
+            echo "$KEYSTORE_BASE64" | base64 -d > app/release.keystore
+            ls -la app/release.keystore
             echo "Keystore decoded successfully"
           else
-            echo "has_keystore=false" >> $GITHUB_ENV
-            echo "No keystore provided, will use debug signing"
+            echo "No keystore provided"
           fi
 
       - name: Build Android App (Release - Signed)
-        if: env.has_keystore == 'true'
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         env:
-          KEYSTORE_PATH: release.keystore
+          KEYSTORE_PATH: app/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        run: |
+          export KEYSTORE_PATH=app/release.keystore
+          export KEYSTORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}"
+          export KEY_ALIAS="${{ secrets.KEY_ALIAS }}"
+          export KEY_PASSWORD="${{ secrets.KEY_PASSWORD }}"
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Build Android App (Debug - Unsigned)
-        if: env.has_keystore != 'true'
+        if: ${{ secrets.KEYSTORE_BASE64 == '' }}
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Locate APK

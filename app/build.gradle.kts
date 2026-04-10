@@ -23,12 +23,22 @@ android {
 
     signingConfigs {
         create("release") {
-            val keystorePath = System.getenv("KEYSTORE_PATH")
-            if (keystorePath != null && keystorePath.isNotEmpty()) {
-                storeFile = file(keystorePath)
+            val keystorePath = System.getenv("KEYSTORE_PATH") ?: ""
+            val keystoreFile = file(keystorePath)
+            
+            println("DEBUG: KEYSTORE_PATH = $keystorePath")
+            println("DEBUG: keystoreFile exists = ${keystoreFile.exists()}")
+            println("DEBUG: KEYSTORE_PASSWORD exists = ${System.getenv("KEYSTORE_PASSWORD") != null}")
+            println("DEBUG: KEY_ALIAS = ${System.getenv("KEY_ALIAS")}")
+            
+            if (keystorePath.isNotEmpty() && keystoreFile.exists()) {
+                storeFile = keystoreFile
                 storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
                 keyAlias = System.getenv("KEY_ALIAS") ?: ""
                 keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+                println("DEBUG: Release signing config configured successfully")
+            } else {
+                println("DEBUG: Release signing config NOT configured - keystore not found")
             }
         }
     }
@@ -40,10 +50,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Only use signing config if keystore is available
-            val keystorePath = System.getenv("KEYSTORE_PATH")
-            if (keystorePath != null && keystorePath.isNotEmpty() && file(keystorePath).exists()) {
+            
+            val keystorePath = System.getenv("KEYSTORE_PATH") ?: ""
+            if (keystorePath.isNotEmpty() && file(keystorePath).exists()) {
                 signingConfig = signingConfigs.getByName("release")
+                println("DEBUG: Release build type will be signed")
+            } else {
+                println("DEBUG: Release build type will be unsigned - no keystore found at $keystorePath")
             }
         }
         debug {
