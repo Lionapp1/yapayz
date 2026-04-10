@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "APKProEditor"
+rootProject.name = "ReDexPro"
 include(":app")

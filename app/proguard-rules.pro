@@ -1,4 +1,4 @@
-# ProGuard rules for APK Pro Editor
+# ProGuard rules for ReDex Pro
 # Keep DEX parser classes
 -keep class org.jf.dexlib2.** { *; }
 -keep class org.jf.baksmali.** { *; }
