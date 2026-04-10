@@ -39,22 +39,21 @@ jobs:
       - name: Run Tests
         run: ./gradlew testDebugUnitTest --continue
 
-      - name: Build Debug APK
-        id: build
+      - name: Build and Find APK
+        id: build_apk
         run: |
           ./gradlew assembleDebug
-          echo "Build finished. Looking for APK..."
-          APK_FILE=$(find . -name "*.apk" -type f | head -1)
-          if [ -z "$APK_FILE" ]; then
-            echo "ERROR: No APK found!"
-            find . -type f -name "*.apk"
+          echo "=== Build completed ==="
+          APK_PATH=$(find . -name "*.apk" -type f 2>/dev/null | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "ERROR: APK not found!"
             exit 1
           fi
-          echo "Found APK: $APK_FILE"
-          ls -lh "$APK_FILE"
-          echo "apk_file=$APK_FILE" >> "$GITHUB_OUTPUT"
+          echo "APK found at: $APK_PATH"
+          ls -lh "$APK_PATH"
+          echo "APK_PATH=$APK_PATH" >> $GITHUB_OUTPUT
 
-      - name: Upload to Release
+      - name: Create Release with APK
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: softprops/action-gh-release@v1
         with:
@@ -70,9 +69,7 @@ jobs:
             - Kotlin + Jetpack Compose
             - Türkçe yapay zeka sohbet
             - Modern Material3 UI
-            
-            📱 Kurulum:
-            APK dosyasını indirip Android cihazınıza kurun.
-          files: ${{ steps.build.outputs.apk_file }}
+          files: |
+            ${{ steps.build_apk.outputs.APK_PATH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
