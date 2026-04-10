@@ -21,24 +21,44 @@ android {
         }
     }
 
+    // Get signing configuration from environment
+    val keystorePath = System.getenv("KEYSTORE_PATH") ?: ""
+    val keystorePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+    val keyAlias = System.getenv("KEY_ALIAS") ?: ""
+    val keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+    
+    // Log signing info (passwords masked)
+    logger.lifecycle("SIGNING: KEYSTORE_PATH = $keystorePath")
+    logger.lifecycle("SIGNING: keystorePath isEmpty = ${keystorePath.isEmpty()}")
+    logger.lifecycle("SIGNING: keystorePassword isEmpty = ${keystorePassword.isEmpty()}")
+    logger.lifecycle("SIGNING: keyAlias isEmpty = ${keyAlias.isEmpty()}")
+    logger.lifecycle("SIGNING: keyPassword isEmpty = ${keyPassword.isEmpty()}")
+    
+    val hasSigningConfig = keystorePath.isNotEmpty() && 
+                          keystorePassword.isNotEmpty() && 
+                          keyAlias.isNotEmpty() && 
+                          keyPassword.isNotEmpty()
+    
+    logger.lifecycle("SIGNING: hasSigningConfig = $hasSigningConfig")
+    
     signingConfigs {
         create("release") {
-            val keystorePath = System.getenv("KEYSTORE_PATH") ?: ""
-            val keystoreFile = file(keystorePath)
-            
-            println("DEBUG: KEYSTORE_PATH = $keystorePath")
-            println("DEBUG: keystoreFile exists = ${keystoreFile.exists()}")
-            println("DEBUG: KEYSTORE_PASSWORD exists = ${System.getenv("KEYSTORE_PASSWORD") != null}")
-            println("DEBUG: KEY_ALIAS = ${System.getenv("KEY_ALIAS")}")
-            
-            if (keystorePath.isNotEmpty() && keystoreFile.exists()) {
-                storeFile = keystoreFile
-                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-                keyAlias = System.getenv("KEY_ALIAS") ?: ""
-                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
-                println("DEBUG: Release signing config configured successfully")
+            if (hasSigningConfig) {
+                val keystoreFile = file(keystorePath)
+                logger.lifecycle("SIGNING: Checking keystore file at ${keystoreFile.absolutePath}")
+                logger.lifecycle("SIGNING: keystoreFile.exists() = ${keystoreFile.exists()}")
+                
+                if (keystoreFile.exists()) {
+                    storeFile = keystoreFile
+                    storePassword = keystorePassword
+                    this.keyAlias = keyAlias
+                    this.keyPassword = keyPassword
+                    logger.lifecycle("SIGNING: Release signing config configured successfully")
+                } else {
+                    logger.lifecycle("SIGNING: ERROR - Keystore file not found!")
+                }
             } else {
-                println("DEBUG: Release signing config NOT configured - keystore not found")
+                logger.lifecycle("SIGNING: WARNING - Incomplete signing configuration, release will be unsigned")
             }
         }
     }
@@ -51,12 +71,11 @@ android {
                 "proguard-rules.pro"
             )
             
-            val keystorePath = System.getenv("KEYSTORE_PATH") ?: ""
-            if (keystorePath.isNotEmpty() && file(keystorePath).exists()) {
+            if (hasSigningConfig && file(keystorePath).exists()) {
                 signingConfig = signingConfigs.getByName("release")
-                println("DEBUG: Release build type will be signed")
+                logger.lifecycle("SIGNING: Release build type WILL BE SIGNED")
             } else {
-                println("DEBUG: Release build type will be unsigned - no keystore found at $keystorePath")
+                logger.lifecycle("SIGNING: Release build type will be UNSIGNED (no valid keystore)")
             }
         }
         debug {

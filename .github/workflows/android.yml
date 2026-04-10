@@ -30,28 +30,40 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
+          echo "Checking keystore secret..."
           if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Secret found, decoding..."
             echo "$KEYSTORE_BASE64" | base64 -d > app/release.keystore
+            echo "Keystore file created at: $(pwd)/app/release.keystore"
             ls -la app/release.keystore
+            file app/release.keystore
             echo "has_keystore=true" >> $GITHUB_OUTPUT
             echo "Keystore decoded successfully"
           else
+            echo "ERROR: KEYSTORE_BASE64 secret is empty!"
             echo "has_keystore=false" >> $GITHUB_OUTPUT
-            echo "No keystore provided"
           fi
+
+      - name: Verify Keystore Before Build
+        if: steps.decode_keystore.outputs.has_keystore == 'true'
+        run: |
+          echo "Verifying keystore file..."
+          ls -la app/release.keystore || echo "File not found!"
+          file app/release.keystore || echo "Cannot check file type"
+          echo "KEYSTORE_PATH will be: $(pwd)/app/release.keystore"
 
       - name: Build Android App (Release - Signed)
         if: steps.decode_keystore.outputs.has_keystore == 'true'
         env:
-          KEYSTORE_PATH: app/release.keystore
+          KEYSTORE_PATH: ${{ github.workspace }}/app/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          export KEYSTORE_PATH=app/release.keystore
-          export KEYSTORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}"
-          export KEY_ALIAS="${{ secrets.KEY_ALIAS }}"
-          export KEY_PASSWORD="${{ secrets.KEY_PASSWORD }}"
+          echo "Environment variables:"
+          echo "KEYSTORE_PATH=$KEYSTORE_PATH"
+          echo "KEY_ALIAS=$KEY_ALIAS"
+          test -f "$KEYSTORE_PATH" && echo "Keystore file exists" || echo "Keystore file NOT FOUND"
           ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Build Android App (Debug - Unsigned)
