@@ -20,7 +20,7 @@ class ArscParser {
             if (type.toInt() != 0x0002) return result // Not ARSC
             
             // Skip to string pool
-            buffer.position(headerSize)
+            buffer.position(headerSize.toInt())
             
             // Parse string pool
             val strings = parseStringPool(buffer)

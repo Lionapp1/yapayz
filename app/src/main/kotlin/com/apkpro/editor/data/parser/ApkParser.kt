@@ -4,9 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.apkpro.editor.data.model.*
-import org.jf.dexlib2.DexFileFactory
-import org.jf.dexlib2.dexbacked.DexBackedDexFile
-import org.jf.dexlib2.iface.DexFile
+import org.jf.dexlib2.DexFileFactory as LibDexFileFactory
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -72,8 +70,8 @@ class ApkParser(private val context: Context) {
         )
     }
     
-    private fun parseDexFiles(zipFile: ZipFile): List<DexFile> {
-        val dexFiles = mutableListOf<DexFile>()
+    private fun parseDexFiles(zipFile: ZipFile): List<com.apkpro.editor.data.model.DexFile> {
+        val dexFiles = mutableListOf<com.apkpro.editor.data.model.DexFile>()
         var index = 0
         
         while (true) {
@@ -88,7 +86,7 @@ class ApkParser(private val context: Context) {
             }
             
             try {
-                val dexFile = DexFileFactory.loadDexFile(tempDex, null)
+                val dexFile = LibDexFileFactory.loadDexFile(tempDex, null)
                 val classCount = dexFile.classes.size
                 var methodCount = 0
                 var fieldCount = 0
@@ -125,7 +123,7 @@ class ApkParser(private val context: Context) {
                 }
                 
                 dexFiles.add(
-                    DexFile(
+                    com.apkpro.editor.data.model.DexFile(
                         name = entryName,
                         size = entry.size,
                         classCount = classCount,

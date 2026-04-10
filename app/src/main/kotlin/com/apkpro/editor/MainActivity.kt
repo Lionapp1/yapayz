@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val viewModel = remember { MainViewModel() }
+                    val viewModel = remember { MainViewModel(application) }
                     
                     // Gelen intent ile APK açma
                     LaunchedEffect(intent) {
