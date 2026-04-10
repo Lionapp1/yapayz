@@ -106,41 +106,37 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
+    - name: Download Release APK
+      uses: actions/download-artifact@v4
       with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: gradle
+        name: release-apk
+        path: app/build/outputs/apk/release/
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    - name: List APK files
+      run: ls -la app/build/outputs/apk/release/
 
-    - name: Build Release APK
-      run: ./gradlew assembleRelease
+    - name: Get APK path
+      id: apk-path
+      run: |
+        APK_PATH=$(ls app/build/outputs/apk/release/*.apk | head -n 1)
+        echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+        echo "Found APK: $APK_PATH"
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create Release and Upload APK
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: v${{ github.run_number }}
-        release_name: Release v${{ github.run_number }}
+        name: Release v${{ github.run_number }}
         body: |
-          Yeni sürüm: Release v${{ github.run_number }}
+          🚀 Yeni sürüm: Release v${{ github.run_number }}
+          
+          ✨ Özellikler:
           - Türkçe AI Sohbet uygulaması
-          - Jetpack Compose ile modern UI
+          - Jetpack Compose ile modern UI  
           - Hugging Face API entegrasyonu
-        draft: false
-        prerelease: false
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
+          
+          📱 Kurulum:
+          `TurkceAI-v${{ github.run_number }}.apk` dosyasını indirip kurun.
+        files: ${{ steps.apk-path.outputs.apk_path }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./app/build/outputs/apk/release/app-release.apk
-        asset_name: TurkceAI-v${{ github.run_number }}.apk
-        asset_content_type: application/vnd.android.package-archive
