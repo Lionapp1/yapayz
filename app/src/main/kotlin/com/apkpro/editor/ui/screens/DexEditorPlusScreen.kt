@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -179,7 +180,7 @@ fun DexEditorPlusScreen(
                         indicator = { tabPositions ->
                             if (tabPositions.isNotEmpty()) {
                                 TabRowDefaults.SecondaryIndicator(
-                                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedDexIndex]),
+                                    modifier = Modifier.fillMaxWidth().wrapContentWidth().padding(horizontal = 16.dp),
                                     color = MaterialTheme.colorScheme.primary
                                 )
                             }
@@ -857,9 +858,9 @@ fun SmaliViewerScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     when (viewMode) {
-                                        SmaliViewMode.SMALI -> Icons.Default.Code
-                                        SmaliViewMode.JAVA -> Icons.Default.Coffee
-                                        SmaliViewMode.BYTECODE -> Icons.Default.Memory
+                                        SmaliViewMode.SMALI -> Icons.Filled.Code
+                                        SmaliViewMode.JAVA -> Icons.Filled.Code
+                                        SmaliViewMode.BYTECODE -> Icons.Filled.Build
                                     },
                                     null,
                                     modifier = Modifier.size(20.dp)
@@ -1095,7 +1096,8 @@ private fun AnnotatedString.Builder.highlightSearch(code: String, query: String)
     return toAnnotatedString()
 }
 
-private fun AnnotatedString.Builder.highlightSmaliSyntax(code: String): AnnotatedString {
+private fun highlightSmaliSyntax(code: String): AnnotatedString {
+    val builder = AnnotatedString.Builder()
     val smaliKeywords = listOf(
         ".class", ".super", ".source", ".method", ".end method", ".field", ".end field",
         ".prologue", ".line", ".locals", ".param", ".annotation", ".end annotation",
@@ -1110,46 +1112,46 @@ private fun AnnotatedString.Builder.highlightSmaliSyntax(code: String): Annotate
     val parts = code.split(" ")
     
     parts.forEachIndexed { index, part ->
-        if (index > 0) append(" ")
+        if (index > 0) builder.append(" ")
         
         when {
             smaliKeywords.any { part.startsWith(it) || part == it } -> {
                 // Anahtar kelime - mavi
-                withStyle(SpanStyle(color = Color(0xFF0066CC), fontWeight = FontWeight.Medium)) {
-                    append(part)
+                builder.withStyle(SpanStyle(color = Color(0xFF0066CC), fontWeight = FontWeight.Medium)) {
+                    builder.append(part)
                 }
             }
             part.startsWith("L") && (part.contains("/") || part.contains(";")) -> {
                 // Sınıf referansı - turuncu
-                withStyle(SpanStyle(color = Color(0xFFE65100))) {
-                    append(part)
+                builder.withStyle(SpanStyle(color = Color(0xFFE65100))) {
+                    builder.append(part)
                 }
             }
             part.startsWith("\"") && part.endsWith("\"") -> {
                 // String - yeşil
-                withStyle(SpanStyle(color = Color(0xFF2E7D32))) {
-                    append(part)
+                builder.withStyle(SpanStyle(color = Color(0xFF2E7D32))) {
+                    builder.append(part)
                 }
             }
             part.startsWith("#") -> {
                 // Yorum - gri
-                withStyle(SpanStyle(color = Color(0xFF757575), fontStyle = FontStyle.Italic)) {
-                    append(part)
+                builder.withStyle(SpanStyle(color = Color(0xFF757575), fontStyle = FontStyle.Italic)) {
+                    builder.append(part)
                 }
             }
             part.matches(Regex("^-?\\d+$")) || part.matches(Regex("^0x[0-9a-fA-F]+$")) -> {
                 // Sayı - mor
-                withStyle(SpanStyle(color = Color(0xFF7B1FA2))) {
-                    append(part)
+                builder.withStyle(SpanStyle(color = Color(0xFF7B1FA2))) {
+                    builder.append(part)
                 }
             }
             else -> {
-                append(part)
+                builder.append(part)
             }
         }
     }
     
-    return toAnnotatedString()
+    return builder.toAnnotatedString()
 }
 
 @Composable

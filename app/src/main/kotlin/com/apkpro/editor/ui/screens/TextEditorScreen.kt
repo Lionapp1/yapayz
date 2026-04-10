@@ -13,6 +13,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -258,7 +260,8 @@ fun TextEditorScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                     ) {
-                        itemsIndexed(codeLines, key = { it.first }) { _, (lineNum, line) ->
+                        itemsIndexed(codeLines, key = { index, item -> item.first }) { index, item ->
+                            val (lineNum, line) = item
                             EditorLine(
                                 lineNumber = lineNum + 1,
                                 code = line,
@@ -397,6 +400,7 @@ private fun EditorLine(
 }
 
 private fun highlightSearchInText(code: String, query: String, isXml: Boolean, isSmali: Boolean): AnnotatedString {
+    val builder = AnnotatedString.Builder()
     val startIndex = code.indexOf(query, ignoreCase = true)
     if (startIndex == -1) {
         return when {
@@ -407,7 +411,6 @@ private fun highlightSearchInText(code: String, query: String, isXml: Boolean, i
     }
     
     val endIndex = startIndex + query.length
-    val builder = AnnotatedString.Builder()
     
     // Arama öncesi
     val before = when {
@@ -458,7 +461,7 @@ private fun highlightXmlSyntax(code: String): AnnotatedString {
                 if (endIndex != -1) {
                     val comment = remaining.substring(0, endIndex + 3)
                     builder.withStyle(SpanStyle(color = Color(0xFF757575), fontStyle = FontStyle.Italic)) {
-                        append(comment)
+                        builder.append(comment)
                     }
                     currentIndex += comment.length
                 } else {
@@ -471,7 +474,7 @@ private fun highlightXmlSyntax(code: String): AnnotatedString {
                 val match = tagRegex.find(remaining)
                 if (match != null) {
                     builder.withStyle(SpanStyle(color = Color(0xFF0066CC), fontWeight = FontWeight.Medium)) {
-                        append(match.value)
+                        builder.append(match.value)
                     }
                     currentIndex += match.value.length
                 } else {
@@ -484,7 +487,7 @@ private fun highlightXmlSyntax(code: String): AnnotatedString {
                 val attrMatch = attrRegex.find(remaining)
                 if (attrMatch != null && attrMatch.range.first == 0) {
                     builder.withStyle(SpanStyle(color = Color(0xFFE65100))) {
-                        append(attrMatch.value.trimEnd('='))
+                        builder.append(attrMatch.value.trimEnd('='))
                     }
                     builder.append("=")
                     currentIndex += attrMatch.value.length
@@ -498,7 +501,7 @@ private fun highlightXmlSyntax(code: String): AnnotatedString {
                 val valueMatch = valueRegex.find(remaining)
                 if (valueMatch != null && valueMatch.range.first == 0) {
                     builder.withStyle(SpanStyle(color = Color(0xFF2E7D32))) {
-                        append(valueMatch.value)
+                        builder.append(valueMatch.value)
                     }
                     currentIndex += valueMatch.value.length
                 } else {
@@ -535,27 +538,27 @@ private fun highlightSmaliSyntaxForEditor(code: String): AnnotatedString {
         when {
             smaliKeywords.any { part.startsWith(it) || part == it } -> {
                 builder.withStyle(SpanStyle(color = Color(0xFF0066CC), fontWeight = FontWeight.Medium)) {
-                    append(part)
+                    builder.append(part)
                 }
             }
             part.startsWith("L") && (part.contains("/") || part.contains(";")) -> {
                 builder.withStyle(SpanStyle(color = Color(0xFFE65100))) {
-                    append(part)
+                    builder.append(part)
                 }
             }
             part.startsWith("\"") && part.endsWith("\"") -> {
                 builder.withStyle(SpanStyle(color = Color(0xFF2E7D32))) {
-                    append(part)
+                    builder.append(part)
                 }
             }
             part.startsWith("#") -> {
                 builder.withStyle(SpanStyle(color = Color(0xFF757575), fontStyle = FontStyle.Italic)) {
-                    append(part)
+                    builder.append(part)
                 }
             }
             part.matches(Regex("^-?\\d+$")) || part.matches(Regex("^0x[0-9a-fA-F]+$")) -> {
                 builder.withStyle(SpanStyle(color = Color(0xFF7B1FA2))) {
-                    append(part)
+                    builder.append(part)
                 }
             }
             else -> builder.append(part)
