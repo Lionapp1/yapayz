@@ -16,4 +16,4 @@
 -keepclassmembers class androidx.compose.** { *; }
 
 # Keep models
--keep class com.apkpro.editor.data.model.** { *; }
+-keep class com.redex.pro.data.model.** { *; }

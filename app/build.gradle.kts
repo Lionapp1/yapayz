@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.apkpro.editor"
+    namespace = "com.redex.pro"
     compileSdk = 34
 
     // Version from CI/CD or defaults
@@ -15,7 +15,7 @@ android {
     logger.lifecycle("BUILD: versionCode=$versionCodeProp, versionName=$versionNameProp")
     
     defaultConfig {
-        applicationId = "com.apkpro.editor"
+        applicationId = "com.redex.pro"
         minSdk = 26
         targetSdk = 34
         versionCode = versionCodeProp
