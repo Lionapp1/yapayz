@@ -23,7 +23,6 @@ interface ChatRepository {
     suspend fun sendMessage(messages: List<ChatMessage>): Result<String>
 }
 
-// OpenRouter API Models
 @Serializable
 data class OpenRouterRequest(
     val model: String = "deepseek/deepseek-chat:free",
@@ -56,11 +55,8 @@ class ChatRepositoryImpl(
     context: Context? = null
 ) : ChatRepository {
 
-    // Lokal AI Model - İnternet olmadan çalışır!
     private val localModel: LocalAIModel? = context?.let { LocalAIModel(it) }
-
-    // OpenRouter API - ücretsiz tier mevcut
-    private val API_KEY = "sk-or-v1--demo-key" // Kullanıcı kendi keyini eklemeli
+    private val API_KEY = "sk-or-v1--demo-key"
     private val BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 
     private val client = HttpClient(Android) {
@@ -81,23 +77,33 @@ class ChatRepositoryImpl(
         }
     }
 
-
     override suspend fun sendMessage(messages: List<ChatMessage>): Result<String> {
-        return try {
-            val lastMessage = messages.lastOrNull()?.content ?: ""
-            val conversationTexts = messages.map { it.content }
-            
-            // Önce lokal modeli dene (her zaman çalışır!)
-            localModel?.let { model ->
-                val localResponse = model.generateResponse(lastMessage, conversationTexts)
-                // Eğer API çalışmazsa lokal yanıt kullanılır
-                return@try Result.success(localResponse)
-            }
+        val lastMessage = messages.lastOrNull()?.content ?: ""
+        val conversationTexts = messages.map { it.content }
 
-            // API çağrısı dene (opsiyonel)
+        return try {
+            if (localModel != null) {
+                val localResponse = localModel.generateResponse(lastMessage, conversationTexts)
+                Result.success(localResponse)
+            } else {
+                tryApiCall(messages, lastMessage, conversationTexts)
+            }
+        } catch (e: Exception) {
+            val fallbackResponse = localModel?.generateResponse(lastMessage, conversationTexts)
+                ?: "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin."
+            Result.success(fallbackResponse)
+        }
+    }
+
+    private suspend fun tryApiCall(
+        messages: List<ChatMessage>,
+        lastMessage: String,
+        conversationTexts: List<String>
+    ): Result<String> {
+        return try {
             val apiMessages = messages.map { msg ->
                 OpenRouterMessage(
-                    role = if (msg.isFromUser) "user" else "assistant",
+                    role = msg.role,
                     content = msg.content
                 )
             }
@@ -116,31 +122,23 @@ class ChatRepositoryImpl(
                 200 -> {
                     val apiResponse: OpenRouterResponse = response.body()
                     val content = apiResponse.choices?.firstOrNull()?.message?.content
-                        ?: generateLocalResponse(lastMessage)
+                        ?: localModel?.generateResponse(lastMessage, conversationTexts)
+                        ?: "Yanıt oluşturulamadı."
                     Result.success(content)
                 }
-                401 -> {
-                    // API key geçersiz, demo moda devam et
-                    Result.success(generateLocalResponse(lastMessage))
-                }
                 else -> {
-                    // API hatası, demo moda devam et
-                    Result.success(generateLocalResponse(lastMessage))
+                    val fallback = localModel?.generateResponse(lastMessage, conversationTexts)
+                        ?: "API hatası. Lütfen tekrar deneyin."
+                    Result.success(fallback)
                 }
             }
         } catch (e: Exception) {
-            // İnternet yok veya hata, lokal model yanıt verir
-            val lastMessage = messages.lastOrNull()?.content ?: ""
-            val conversationTexts = messages.map { it.content }
-            val fallbackResponse = localModel?.generateResponse(lastMessage, conversationTexts)
-                ?: "Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin."
-            Result.success(fallbackResponse)
+            val fallback = localModel?.generateResponse(lastMessage, conversationTexts)
+                ?: "Bağlantı hatası. Lütfen tekrar deneyin."
+            Result.success(fallback)
         }
     }
 
-    /**
-     * Lokal model durumunu kontrol et
-     */
     fun isLocalModelReady(): Boolean {
         return localModel != null
     }
