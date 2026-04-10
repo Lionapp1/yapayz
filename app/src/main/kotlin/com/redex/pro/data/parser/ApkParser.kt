@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.redex.pro.data.model.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jf.dexlib2.DexFileFactory as LibDexFileFactory
 import java.io.File
 import java.io.FileInputStream
@@ -499,5 +501,30 @@ class ApkParser(private val context: Context) {
         }
         
         return result
+    }
+    
+    // ========== SMALİ GÖRÜNTÜLEYİCİ ==========
+    
+    suspend fun generateSmaliCode(apkFile: File, dexFile: ApkFileEntry, classInfo: ClassInfo): String {
+        return withContext(Dispatchers.IO) {
+            val dexBytes = extractFileFromApk(apkFile, dexFile.path) ?: return@withContext "// Error: Could not extract DEX file"
+            val tempDex = File(cacheDir, "temp_smali_${dexFile.name}")
+            tempDex.writeBytes(dexBytes)
+            
+            try {
+                val dex = LibDexFileFactory.loadDexFile(tempDex, null)
+                val classDef = dex.classes.find { it.type == classInfo.name }
+                
+                if (classDef != null) {
+                    generateSmaliCode(classDef)
+                } else {
+                    "// Error: Class not found in DEX file"
+                }
+            } catch (e: Exception) {
+                "// Error generating Smali code: ${e.message}"
+            } finally {
+                tempDex.delete()
+            }
+        }
     }
 }

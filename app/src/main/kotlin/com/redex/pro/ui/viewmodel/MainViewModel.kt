@@ -56,6 +56,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedFileContent = MutableStateFlow<ByteArray?>(null)
     val selectedFileContent: StateFlow<ByteArray?> = _selectedFileContent.asStateFlow()
     
+    // Smali görüntüleyici verileri
+    private val _selectedClass = MutableStateFlow<ClassInfo?>(null)
+    val selectedClass: StateFlow<ClassInfo?> = _selectedClass.asStateFlow()
+    
+    private val _smaliContent = MutableStateFlow<String>("")
+    val smaliContent: StateFlow<String> = _smaliContent.asStateFlow()
+    
     fun openApkFromUri(uri: Uri) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -125,8 +132,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 is UiState.FileBrowser -> UiState.ApkDetail
                 is UiState.DexEditor -> UiState.FileBrowser
                 is UiState.TextEditor -> UiState.FileBrowser
+                is UiState.SmaliViewer -> UiState.DexEditor
                 is UiState.Update -> UiState.Home
                 else -> UiState.Home
+            }
+        }
+    }
+    
+    fun openSmaliViewer(dexFile: ApkFileEntry, classInfo: ClassInfo) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                // Smali kodunu üret
+                val smaliCode = apkParser.generateSmaliCode(File(_currentApk.value?.path ?: return@launch), dexFile, classInfo)
+                _selectedClass.value = classInfo
+                _smaliContent.value = smaliCode
+                navigateTo(UiState.SmaliViewer)
+            } catch (e: Exception) {
+                _error.value = "Smali kodu oluşturulurken hata: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -242,10 +267,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         object FileBrowser : UiState()
         object DexEditor : UiState()
         object TextEditor : UiState()
+        object SmaliViewer : UiState()     // Yeni: Smali kod görüntüleyici
         object Update : UiState()          // Yeni: Güncelleme ekranı
     }
     
     fun openUpdateScreen() {
         navigateTo(UiState.Update)
+    }
+    
+    // Bottom navigation için ana ekranlar
+    fun canShowBottomNav(): Boolean {
+        return when (_uiState.value) {
+            is UiState.Home, 
+            is UiState.ApkDetail, 
+            is UiState.FileBrowser -> true
+            else -> false
+        }
     }
 }

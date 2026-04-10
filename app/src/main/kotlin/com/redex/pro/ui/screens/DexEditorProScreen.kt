@@ -23,57 +23,71 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.BackHandler
 import com.redex.pro.data.model.ApkFileEntry
 import com.redex.pro.data.model.ClassInfo
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun DexEditorProScreen(
     dexFiles: List<Pair<ApkFileEntry, List<ClassInfo>>>,
     onBack: () -> Unit,
-    onClassClick: (ApkFileEntry, ClassInfo) -> Unit
+    onClassClick: (ApkFileEntry, ClassInfo) -> Unit,
+    onViewSmali: ((ApkFileEntry, ClassInfo) -> Unit)? = null
 ) {
     var selectedDexIndex by rememberSaveable { mutableIntStateOf(0) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var showOnlyUserClasses by rememberSaveable { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
     
+    // Filtrelenmiş sınıflar - background thread'de hesaplanacak
+    var filteredClasses by remember { mutableStateOf<List<ClassInfo>>(emptyList()) }
+    
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
     
     val currentDex = dexFiles.getOrNull(selectedDexIndex)
     
-    // Performans için debounce arama
+    // Performans için debounce arama + background thread
     var debouncedQuery by remember { mutableStateOf("") }
     
     LaunchedEffect(searchQuery) {
-        delay(200) // 200ms debounce
+        delay(150) // 150ms debounce
         debouncedQuery = searchQuery
     }
     
-    // Filtreleme - ana thread'de yapılacak kadar hızlı
-    val filteredClasses = remember(debouncedQuery, showOnlyUserClasses, currentDex, selectedDexIndex) {
+    // Filtreleme - background thread'de yapılıyor (ANA PERFORMANS İYİLEŞTİRMESİ)
+    LaunchedEffect(debouncedQuery, showOnlyUserClasses, currentDex, selectedDexIndex) {
         isLoading = true
-        val result = currentDex?.second?.filter { classInfo ->
-            val matchesSearch = debouncedQuery.isEmpty() || 
-                classInfo.name.contains(debouncedQuery, ignoreCase = true)
+        withContext(Dispatchers.Default) {
+            val result = currentDex?.second?.let { classes ->
+                classes.filter { classInfo ->
+                    val matchesSearch = debouncedQuery.isEmpty() || 
+                        classInfo.name.contains(debouncedQuery, ignoreCase = true)
+                    
+                    val isUserClass = if (showOnlyUserClasses) {
+                        !classInfo.name.startsWith("Landroid/") &&
+                        !classInfo.name.startsWith("Ljava/") &&
+                        !classInfo.name.startsWith("Lkotlin/") &&
+                        !classInfo.name.startsWith("Landroidx/") &&
+                        !classInfo.name.startsWith("Lkotlinx/") &&
+                        !classInfo.name.startsWith("Lcom/google/") &&
+                        !classInfo.name.startsWith("Lcom/android/")
+                    } else true
+                    
+                    matchesSearch && isUserClass
+                }?.sortedBy { it.name } ?: emptyList()
+            } ?: emptyList()
             
-            val isUserClass = if (showOnlyUserClasses) {
-                !classInfo.name.startsWith("Landroid/") &&
-                !classInfo.name.startsWith("Ljava/") &&
-                !classInfo.name.startsWith("Lkotlin/") &&
-                !classInfo.name.startsWith("Landroidx/") &&
-                !classInfo.name.startsWith("Lkotlinx/") &&
-                !classInfo.name.startsWith("Lcom/google/") &&
-                !classInfo.name.startsWith("Lcom/android/")
-            } else true
-            
-            matchesSearch && isUserClass
-        }?.sortedBy { it.name } ?: emptyList()
-        isLoading = false
-        result
+            withContext(Dispatchers.Main) {
+                filteredClasses = result
+                isLoading = false
+            }
+        }
     }
     
     // İstatistikler
@@ -89,6 +103,11 @@ fun DexEditorProScreen(
     
     val (totalStats, userClassCount) = stats
     val (totalClasses, totalMethods, totalFields) = totalStats
+    
+    // Android fiziksel geri tuşu desteği
+    BackHandler(enabled = true) {
+        onBack()
+    }
     
     Scaffold(
         topBar = {
@@ -240,15 +259,14 @@ fun DexEditorProScreen(
                             items = filteredClasses,
                             key = { it.name }
                         ) { classInfo ->
-                            ClassListItem(
-                                classInfo = classInfo,
-                                onClick = { 
-                                    currentDex?.let { (dex, _) ->
-                                        onClassClick(dex, classInfo)
-                                    }
-                                },
-                                modifier = Modifier.animateItemPlacement()
-                            )
+                            currentDex?.let { (dex, _) ->
+                                ClassListItem(
+                                    classInfo = classInfo,
+                                    onClick = { onClassClick(dex, classInfo) },
+                                    onViewSmali = onViewSmali?.let { { it(dex, classInfo) } },
+                                    modifier = Modifier.animateItemPlacement()
+                                )
+                            }
                         }
                     }
                 }
@@ -297,6 +315,7 @@ private fun StatItem(
 private fun ClassListItem(
     classInfo: ClassInfo,
     onClick: () -> Unit,
+    onViewSmali: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val displayName = classInfo.name
@@ -358,7 +377,8 @@ private fun ClassListItem(
             
             // Metod ve alan sayıları
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 CountBadge(
                     count = classInfo.methods.size,
@@ -368,9 +388,21 @@ private fun ClassListItem(
                     count = classInfo.fields.size,
                     icon = Icons.Filled.DataObject
                 )
+                
+                // Kodları Gör butonu
+                if (onViewSmali != null) {
+                    IconButton(
+                        onClick = onViewSmali,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Code,
+                            contentDescription = "Kodları Gör",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
-            
-            Spacer(modifier = Modifier.width(8.dp))
             
             Icon(
                 imageVector = Icons.Filled.ChevronRight,

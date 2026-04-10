@@ -166,9 +166,23 @@ class MainActivity : ComponentActivity() {
                                 dexFiles = dexFilesWithClasses,
                                 onBack = { viewModel.navigateBack() },
                                 onClassClick = { dex, classInfo ->
-                                    // TODO: Smali editör aç
+                                    // Sınıf detayı için
+                                },
+                                onViewSmali = { dex, classInfo ->
+                                    viewModel.openSmaliViewer(dex, classInfo)
                                 }
                             )
+                        }
+                        is MainViewModel.UiState.SmaliViewer -> {
+                            val selectedClass by viewModel.selectedClass.collectAsState()
+                            val smaliContent by viewModel.smaliContent.collectAsState()
+                            selectedClass?.let { classInfo ->
+                                SmaliViewerScreen(
+                                    className = classInfo.name,
+                                    smaliCode = smaliContent,
+                                    onBack = { viewModel.navigateBack() }
+                                )
+                            }
                         }
                         is MainViewModel.UiState.TextEditor -> {
                             selectedFile?.let { file ->
@@ -224,6 +238,22 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
+                    
+                    // Bottom Navigation - Ana ekranlarda göster
+                    val showBottomNav = viewModel.canShowBottomNav()
+                    if (showBottomNav) {
+                        ReDexProBottomNavigation(
+                            currentState = uiState,
+                            onNavigate = { state ->
+                                when (state) {
+                                    is MainViewModel.UiState.Home -> viewModel.goHome()
+                                    is MainViewModel.UiState.ApkDetail -> viewModel.navigateTo(MainViewModel.UiState.ApkDetail)
+                                    is MainViewModel.UiState.FileBrowser -> viewModel.openFileBrowser()
+                                    else -> {}
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -269,5 +299,32 @@ class MainActivity : ComponentActivity() {
         if (needPermissions.isNotEmpty()) {
             requestPermissionLauncher.launch(needPermissions.toTypedArray())
         }
+    }
+}
+
+@Composable
+private fun ReDexProBottomNavigation(
+    currentState: MainViewModel.UiState,
+    onNavigate: (MainViewModel.UiState) -> Unit
+) {
+    NavigationBar {
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Home, contentDescription = "Ana Sayfa") },
+            label = { Text("Ana Sayfa") },
+            selected = currentState is MainViewModel.UiState.Home,
+            onClick = { onNavigate(MainViewModel.UiState.Home) }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Info, contentDescription = "APK Detay") },
+            label = { Text("Detay") },
+            selected = currentState is MainViewModel.UiState.ApkDetail,
+            onClick = { onNavigate(MainViewModel.UiState.ApkDetail) }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Folder, contentDescription = "Dosya Gezgini") },
+            label = { Text("Dosyalar") },
+            selected = currentState is MainViewModel.UiState.FileBrowser,
+            onClick = { onNavigate(MainViewModel.UiState.FileBrowser) }
+        )
     }
 }
