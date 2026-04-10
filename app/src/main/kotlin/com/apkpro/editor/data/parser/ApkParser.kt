@@ -35,6 +35,9 @@ class ApkParser(private val context: Context) {
         val sha1 = calculateHash(file, "SHA-1")
         val sha256 = calculateHash(file, "SHA-256")
         
+        // Önce imzayı kontrol et (zip kapanmadan önce)
+        val isSigned = checkSigned(zipFile)
+        
         // AndroidManifest.xml'den bilgileri al
         val manifestEntry = zipFile.getEntry("AndroidManifest.xml")
         val manifestInfo = manifestEntry?.let { parseManifest(zipFile.getInputStream(it)) }
@@ -59,7 +62,7 @@ class ApkParser(private val context: Context) {
             md5 = md5,
             sha1 = sha1,
             sha256 = sha256,
-            isSigned = checkSigned(zipFile),
+            isSigned = isSigned,
             permissions = manifestInfo?.usesPermissions ?: emptyList(),
             activities = manifestInfo?.activities?.map { it.name } ?: emptyList(),
             services = emptyList(),
