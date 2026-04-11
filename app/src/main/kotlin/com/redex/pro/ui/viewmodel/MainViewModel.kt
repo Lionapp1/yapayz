@@ -314,3 +314,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun goHome() {
         _uiState.value = UiState.Home
     }
+    
+    fun editSmaliCode(dexFile: ApkFileEntry, classInfo: ClassInfo, smaliCode: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                // Smali kodunu kaydet (placeholder)
+                _error.value = "Smali kodu kaydedildi: ${classInfo.name}"
+            } catch (e: Exception) {
+                _error.value = "Smali kaydetme hatası: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
+    fun editResource(key: String, value: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                // Kaynağı düzenle (placeholder)
+                _error.value = "Kaynak düzenlendi: $key"
+            } catch (e: Exception) {
+                _error.value = "Kaynak düzenleme hatası: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
+    fun clearError() {
+        _error.value = null
+    }

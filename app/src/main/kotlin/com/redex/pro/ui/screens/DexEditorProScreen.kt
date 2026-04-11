@@ -37,12 +37,16 @@ fun DexEditorProScreen(
     dexFiles: List<Pair<ApkFileEntry, List<ClassInfo>>>,
     onBack: () -> Unit,
     onClassClick: (ApkFileEntry, ClassInfo) -> Unit,
+    onEditSmali: (ApkFileEntry, ClassInfo, String) -> Unit = { _, _, _ -> },
     onViewSmali: ((ApkFileEntry, ClassInfo) -> Unit)? = null
 ) {
     var selectedDexIndex by rememberSaveable { mutableIntStateOf(0) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var showOnlyUserClasses by rememberSaveable { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var selectedClass by remember { mutableStateOf<ClassInfo?>(null) }
+    var smaliCode by remember { mutableStateOf("") }
     
     // Filtrelenmiş sınıflar - background thread'de hesaplanacak
     var filteredClasses by remember { mutableStateOf<List<ClassInfo>>(emptyList()) }
@@ -262,8 +266,17 @@ fun DexEditorProScreen(
                             currentDex?.let { (dex, _) ->
                                 ClassListItem(
                                     classInfo = classInfo,
-                                    onClick = { onClassClick(dex, classInfo) },
+                                    onClick = { 
+                                        selectedClass = classInfo
+                                        smaliCode = "// Smali code placeholder for ${classInfo.name}"
+                                        showEditDialog = true
+                                    },
                                     onViewSmali = onViewSmali?.let { { it(dex, classInfo) } },
+                                    onEditSmali = { 
+                                        selectedClass = classInfo
+                                        smaliCode = "// Smali code placeholder for ${classInfo.name}"
+                                        showEditDialog = true
+                                    },
                                     modifier = Modifier.animateItemPlacement()
                                 )
                             }
@@ -279,6 +292,50 @@ fun DexEditorProScreen(
                 }
             }
         }
+    }
+    
+    // Smali düzenleme dialogu
+    if (showEditDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("Smali Düzenle") },
+            text = {
+                Column {
+                    Text(
+                        "Sınıf: ${selectedClass?.name?.removePrefix("L")?.removeSuffix(";")?.replace("/", ".")}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = smaliCode,
+                        onValueChange = { smaliCode = it },
+                        label = { Text("Smali Kodu") },
+                        singleLine = false,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    selectedClass?.let { classInfo ->
+                        currentDex?.let { (dex, _) ->
+                            onEditSmali(dex, classInfo, smaliCode)
+                        }
+                    }
+                    showEditDialog = false
+                }) {
+                    Text("Kaydet")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("İptal")
+                }
+            }
+        )
     }
 }
 
@@ -316,6 +373,7 @@ private fun ClassListItem(
     classInfo: ClassInfo,
     onClick: () -> Unit,
     onViewSmali: (() -> Unit)? = null,
+    onEditSmali: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val displayName = classInfo.name
@@ -389,6 +447,20 @@ private fun ClassListItem(
                     icon = Icons.Filled.DataObject
                 )
                 
+                // Düzenle butonu
+                if (onEditSmali != null) {
+                    IconButton(
+                        onClick = onEditSmali,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = "Düzenle",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                
                 // Kodları Gör butonu
                 if (onViewSmali != null) {
                     IconButton(
@@ -398,7 +470,7 @@ private fun ClassListItem(
                         Icon(
                             imageVector = Icons.Filled.Code,
                             contentDescription = "Kodları Gör",
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.secondary
                         )
                     }
                 }

@@ -115,6 +115,9 @@ class MainActivity : ComponentActivity() {
                                     dexFiles = dexFilesWithClasses,
                                     onBack = { viewModel.navigateBack() },
                                     onClassClick = { _, _ -> },
+                                    onEditSmali = { dex, classInfo, smaliCode ->
+                                        viewModel.editSmaliCode(dex, classInfo, smaliCode)
+                                    },
                                     onViewSmali = { dex, classInfo ->
                                         viewModel.openSmaliViewer(dex, classInfo)
                                     }
@@ -158,7 +161,10 @@ class MainActivity : ComponentActivity() {
                                 currentApk?.let { apk ->
                                     ArscViewerScreen(
                                         resources = apk.resources,
-                                        onBack = { viewModel.navigateBack() }
+                                        onBack = { viewModel.navigateBack() },
+                                        onEditResource = { key, value ->
+                                            viewModel.editResource(key, value)
+                                        }
                                     )
                                 }
                             }

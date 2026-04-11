@@ -21,10 +21,14 @@ import com.redex.pro.data.model.ResourceInfo
 fun ArscViewerScreen(
     resources: ResourceInfo,
     onBack: () -> Unit,
+    onEditResource: (String, String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     var searchQuery by remember { mutableStateOf("") }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var selectedResource by remember { mutableStateOf<String?>(null) }
+    var resourceValue by remember { mutableStateOf("") }
     
     val tabs = listOf("Stringler", "Drawable", "Layout", "Diğer")
     
@@ -46,7 +50,12 @@ fun ArscViewerScreen(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White
-                )
+                ),
+                actions = {
+                    IconButton(onClick = { /* Refresh */ }) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Yenile", tint = Color.White)
+                    }
+                }
             )
         }
     ) { padding ->
@@ -68,7 +77,7 @@ fun ArscViewerScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -105,97 +114,121 @@ fun ArscViewerScreen(
             
             // İçerik
             when (selectedTab) {
-                0 -> StringList(resources.strings.filter { it.key.contains(searchQuery, ignoreCase = true) })
-                1 -> DrawableList(resources.drawables.filter { it.contains(searchQuery, ignoreCase = true) })
-                2 -> LayoutList(resources.layouts.filter { it.contains(searchQuery, ignoreCase = true) })
-                3 -> OtherResourcesList(resources)
+                0 -> ResourceList(resources.strings, searchQuery, onEdit = { key, value ->
+                    selectedResource = key
+                    resourceValue = value
+                    showEditDialog = true
+                })
+                1 -> ResourceList(resources.drawables.map { it to "" }, searchQuery, isEditable = false)
+                2 -> ResourceList(resources.layouts.map { it to "" }, searchQuery, isEditable = false)
+                else -> Text("Diğer kaynaklar")
             }
         }
+    }
+    
+    // Düzenleme dialogu
+    if (showEditDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            title = { Text("Kaynağı Düzenle") },
+            text = {
+                Column {
+                    Text("Anahtar: $selectedResource")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = resourceValue,
+                        onValueChange = { resourceValue = it },
+                        label = { Text("Değer") },
+                        singleLine = false,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    selectedResource?.let { onEditResource(it, resourceValue) }
+                    showEditDialog = false
+                }) {
+                    Text("Kaydet")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("İptal")
+                }
+            }
+        )
     }
 }
 
 @Composable
 private fun ResourceStat(label: String, count: Int) {
-    Column {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             count.toString(),
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Text(
             label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
         )
     }
 }
 
 @Composable
-private fun StringList(strings: Map<String, String>) {
-    LazyColumn {
-        items(strings.toList()) { (key, value) ->
+private fun ResourceList(
+    items: List<Pair<String, String>>,
+    searchQuery: String,
+    isEditable: Boolean = true,
+    onEdit: (String, String) -> Unit = { _, _ -> }
+) {
+    val filteredItems = if (searchQuery.isEmpty()) {
+        items
+    } else {
+        items.filter { it.first.contains(searchQuery, ignoreCase = true) }
+    }
+    
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        items(filteredItems) { (key, value) ->
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        key,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        value,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            key,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            value.take(50) + if (value.length > 50) "..." else "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                    if (isEditable) {
+                        IconButton(onClick = { onEdit(key, value) }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Düzenle")
+                        }
+                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun DrawableList(drawables: List<String>) {
-    LazyColumn {
-        items(drawables) { drawable ->
-            ListItem(
-                headlineContent = { Text(drawable.substringAfterLast("/")) },
-                supportingContent = { Text(drawable, fontSize = 11.sp) },
-                leadingContent = {
-                    Icon(Icons.Default.Image, contentDescription = null)
-                },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun LayoutList(layouts: List<String>) {
-    LazyColumn {
-        items(layouts) { layout ->
-            ListItem(
-                headlineContent = { Text(layout.substringAfterLast("/")) },
-                supportingContent = { Text(layout, fontSize = 11.sp) },
-                leadingContent = {
-                    Icon(Icons.Default.ViewCompact, contentDescription = null)
-                },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun OtherResourcesList(resources: ResourceInfo) {
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("Diğer Kaynaklar", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
-        Text("Raw: ${resources.rawCount} dosya")
-        Text("Assets: ${resources.assetCount} dosya")
-        Text("Toplam string: ${resources.strings.size}")
     }
 }
