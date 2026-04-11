@@ -3,6 +3,8 @@ package com.redex.pro.ui.screens
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,13 +12,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -24,12 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.redex.pro.data.model.ApkInfo
 import com.redex.pro.ui.viewmodel.MainViewModel
-import java.io.File
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: MainViewModel) {
-    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val currentApk by viewModel.currentApk.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -44,287 +49,324 @@ fun HomeScreen(viewModel: MainViewModel) {
     
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { 
-                    Text(
-                        "ReDex Pro",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White
-                ),
-                actions = {
-                    IconButton(onClick = { viewModel.openUpdateScreen() }) {
-                        Icon(Icons.Default.SystemUpdate, contentDescription = "Güncelleme", tint = Color.White)
+            Surface(
+                color = MaterialTheme.colorScheme.primary,
+                tonalElevation = 4.dp
+            ) {
+                TopAppBar(
+                    title = { 
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Android,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                "ReDex Pro",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 24.sp,
+                                color = Color.White
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White,
+                        actionIconContentColor = Color.White
+                    ),
+                    actions = {
+                        IconButton(onClick = { viewModel.openUpdateScreen() }) {
+                            Icon(Icons.Default.SystemUpdate, contentDescription = "Güncelleme", tint = Color.White)
+                        }
+                        IconButton(onClick = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) }) {
+                            Icon(Icons.Default.FolderOpen, contentDescription = "APK Aç", tint = Color.White)
+                        }
                     }
-                    IconButton(onClick = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) }) {
-                        Icon(Icons.Default.FolderOpen, contentDescription = "APK Aç", tint = Color.White)
-                    }
-                    IconButton(onClick = { viewModel.goHome() }) {
-                        Icon(Icons.Default.Home, contentDescription = "Ana Sayfa", tint = Color.White)
-                    }
-                }
-            )
+                )
+            }
         }
     ) { padding ->
-        when (uiState) {
-            is MainViewModel.UiState.Home -> {
-                HomeContent(
-                    recentFiles = recentFiles,
-                    onSelectApk = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) },
-                    onRecentClick = { viewModel.openApkFromPath(it.path) },
-                    onUpdateClick = { viewModel.openUpdateScreen() },
-                    modifier = Modifier.padding(padding)
-                )
-            }
-            is MainViewModel.UiState.ApkDetail -> {
-                currentApk?.let { apk ->
-                    ApkDetailScreen(
-                        apk = apk,
-                        onBack = { viewModel.navigateBack() },
-                        onViewDex = { viewModel.navigateTo(MainViewModel.UiState.DexViewer) },
-                        onViewArsc = { viewModel.navigateTo(MainViewModel.UiState.ArscViewer) },
-                        onViewManifest = { viewModel.navigateTo(MainViewModel.UiState.ManifestViewer) },
-                        onViewConverter = { viewModel.navigateTo(MainViewModel.UiState.Converter) },
-                        onOpenFileBrowser = { viewModel.openFileBrowser() },
-                        onOpenDexEditor = { viewModel.openDexEditor() },
-                        onEditIcon = { },
-                        onChangeName = { viewModel.changeApkName(it) },
-                        onChangePackage = { viewModel.changePackageName(it) },
-                        modifier = Modifier.padding(padding)
+        Box(modifier = Modifier.padding(padding)) {
+            when (uiState) {
+                is MainViewModel.UiState.Home -> {
+                    ModernHomeContent(
+                        recentFiles = recentFiles,
+                        onSelectApk = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) },
+                        onRecentClick = { viewModel.openApkFromPath(it.path) },
+                        onUpdateClick = { viewModel.openUpdateScreen() }
                     )
                 }
-            }
-            is MainViewModel.UiState.DexViewer -> {
-                currentApk?.let { apk ->
-                    DexViewerScreen(
-                        dexFiles = apk.dexFiles,
-                        onBack = { viewModel.navigateBack() },
-                        modifier = Modifier.padding(padding)
-                    )
-                }
-            }
-            is MainViewModel.UiState.ArscViewer -> {
-                currentApk?.let { apk ->
-                    ArscViewerScreen(
-                        resources = apk.resources,
-                        onBack = { viewModel.navigateBack() },
-                        modifier = Modifier.padding(padding)
-                    )
-                }
-            }
-            is MainViewModel.UiState.ManifestViewer -> {
-                currentApk?.let { apk ->
-                    ManifestViewerScreen(
-                        manifest = apk.manifest,
-                        onBack = { viewModel.navigateBack() },
-                        modifier = Modifier.padding(padding)
-                    )
-                }
-            }
-            is MainViewModel.UiState.Converter -> {
-                currentApk?.let { apk ->
-                    ConverterScreen(
-                        apk = apk,
-                        onBack = { viewModel.navigateBack() },
-                        modifier = Modifier.padding(padding)
-                    )
-                }
-            }
-            is MainViewModel.UiState.FileBrowser -> {
-            }
-            is MainViewModel.UiState.Update -> {
-                UpdateScreen(
-                    onNavigateBack = { viewModel.navigateBack() }
-                )
-            }
-            is MainViewModel.UiState.DexEditor -> {
-            }
-            is MainViewModel.UiState.TextEditor -> {
-            }
-            else -> {
-                HomeContent(
-                    recentFiles = recentFiles,
-                    onSelectApk = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) },
-                    onRecentClick = { viewModel.openApkFromPath(it.path) },
-                    onUpdateClick = { viewModel.openUpdateScreen() },
-                    modifier = Modifier.padding(padding)
-                )
-            }
-        }
-        
-        if (isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            }
-        }
-        
-        error?.let { errorMsg ->
-            AlertDialog(
-                onDismissRequest = { viewModel.clearError() },
-                title = { Text("Hata") },
-                text = { Text(errorMsg) },
-                confirmButton = {
-                    TextButton(onClick = { viewModel.clearError() }) {
-                        Text("Tamam")
+                is MainViewModel.UiState.ApkDetail -> {
+                    currentApk?.let { apk ->
+                        ApkDetailScreen(
+                            apk = apk,
+                            onBack = { viewModel.navigateBack() },
+                            onViewDex = { viewModel.navigateTo(MainViewModel.UiState.DexViewer) },
+                            onViewArsc = { viewModel.navigateTo(MainViewModel.UiState.ArscViewer) },
+                            onViewManifest = { viewModel.navigateTo(MainViewModel.UiState.ManifestViewer) },
+                            onViewConverter = { viewModel.navigateTo(MainViewModel.UiState.Converter) },
+                            onOpenFileBrowser = { viewModel.openFileBrowser() },
+                            onOpenDexEditor = { viewModel.openDexEditor() },
+                            onEditIcon = { },
+                            onChangeName = { viewModel.changeApkName(it) },
+                            onChangePackage = { viewModel.changePackageName(it) }
+                        )
                     }
                 }
-            )
+                is MainViewModel.UiState.DexViewer -> {
+                    currentApk?.let { apk ->
+                        DexViewerScreen(
+                            dexFiles = apk.dexFiles,
+                            onBack = { viewModel.navigateBack() }
+                        )
+                    }
+                }
+                is MainViewModel.UiState.ArscViewer -> {
+                    currentApk?.let { apk ->
+                        ArscViewerScreen(
+                            resources = apk.resources,
+                            onBack = { viewModel.navigateBack() }
+                        )
+                    }
+                }
+                is MainViewModel.UiState.ManifestViewer -> {
+                    currentApk?.let { apk ->
+                        ManifestViewerScreen(
+                            manifest = apk.manifest,
+                            onBack = { viewModel.navigateBack() }
+                        )
+                    }
+                }
+                is MainViewModel.UiState.Converter -> {
+                    currentApk?.let { apk ->
+                        ConverterScreen(
+                            apk = apk,
+                            onBack = { viewModel.navigateBack() }
+                        )
+                    }
+                }
+                is MainViewModel.UiState.FileBrowser -> {
+                }
+                is MainViewModel.UiState.Update -> {
+                    UpdateScreen(
+                        onNavigateBack = { viewModel.navigateBack() }
+                    )
+                }
+                is MainViewModel.UiState.DexEditor -> {
+                }
+                is MainViewModel.UiState.TextEditor -> {
+                }
+                else -> {
+                    ModernHomeContent(
+                        recentFiles = recentFiles,
+                        onSelectApk = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) },
+                        onRecentClick = { viewModel.openApkFromPath(it.path) },
+                        onUpdateClick = { viewModel.openUpdateScreen() }
+                    )
+                }
+            }
+            
+            // Loading overlay
+            AnimatedVisibility(
+                visible = isLoading,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.6f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 4.dp
+                            )
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                "Yükleniyor...",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Error dialog
+            error?.let { errorMsg ->
+                AlertDialog(
+                    onDismissRequest = { viewModel.clearError() },
+                    icon = { Icon(Icons.Default.Error, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                    title = { Text("Hata") },
+                    text = { Text(errorMsg) },
+                    confirmButton = {
+                        TextButton(onClick = { viewModel.clearError() }) {
+                            Text("Tamam")
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp)
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun HomeContent(
+private fun ModernHomeContent(
     recentFiles: List<ApkInfo>,
     onSelectApk: () -> Unit,
     onRecentClick: (ApkInfo) -> Unit,
-    onUpdateClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onUpdateClick: () -> Unit = {}
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Card(
+        // Hero Section
+        item {
+            HeroSection(onSelectApk = onSelectApk)
+        }
+        
+        // Features Grid
+        item {
+            Text(
+                "Özellikler",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+            )
+        }
+        
+        item {
+            ModernFeatureGrid()
+        }
+        
+        // Update Card
+        item {
+            ModernUpdateCard(onUpdateClick = onUpdateClick)
+        }
+        
+        // Recent Files
+        if (recentFiles.isNotEmpty()) {
+            item {
+                Text(
+                    "Son Dosyalar",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)
+                )
+            }
+            
+            items(recentFiles.take(10), key = { it.path }) { apk ->
+                ModernRecentFileItem(
+                    apk = apk,
+                    onClick = { onRecentClick(apk) }
+                )
+            }
+        }
+        
+        // Bottom spacing
+        item {
+            Spacer(Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+private fun HeroSection(onSelectApk: () -> Unit) {
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.02f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = EaseInOutCubic),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(scale),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            ),
-            shape = RoundedCornerShape(16.dp)
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.tertiary
+                        )
+                    )
+                )
+                .padding(28.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(
                     Icons.Default.Android,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(64.dp)
+                    tint = Color.White,
+                    modifier = Modifier.size(72.dp)
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
                 Text(
                     "ReDex Pro",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
                 )
                 Text(
                     "Profesyonel APK & DEX Editör",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 4.dp)
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White.copy(alpha = 0.9f),
+                    textAlign = TextAlign.Center
                 )
+                
+                Spacer(Modifier.height(24.dp))
                 
                 Button(
                     onClick = onSelectApk,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 20.dp),
+                        .height(56.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
+                        containerColor = Color.White,
+                        contentColor = MaterialTheme.colorScheme.primary
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("APK Dosyası Seç")
-                }
-            }
-        }
-        
-        Text(
-            "Özellikler",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
-        
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FeatureCard(Icons.Default.Code, "DEX", "Smali/Java", Modifier.weight(1f))
-            FeatureCard(Icons.Default.Settings, "ARSC", "Kaynaklar", Modifier.weight(1f))
-            FeatureCard(Icons.Default.Transform, "Dönüş", "APK/AAB", Modifier.weight(1f))
-        }
-        
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FeatureCard(Icons.Default.Edit, "Düzenle", "XML/Manifest", Modifier.weight(1f))
-            FeatureCard(Icons.Default.Image, "İkon", "Resimler", Modifier.weight(1f))
-            FeatureCard(Icons.Default.Inventory, "Paket", "Ad/Değiş", Modifier.weight(1f))
-        }
-        
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-                .clickable { onUpdateClick() },
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer
-            ),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SystemUpdate,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.size(40.dp)
-                )
-                Spacer(Modifier.width(16.dp))
-                Column(modifier = Modifier.weight(1f)) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(24.dp))
+                    Spacer(Modifier.width(12.dp))
                     Text(
-                        "Güncelleme Kontrolü",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        "Yeni sürüm varsa hemen indir",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                    )
-                }
-                Icon(Icons.Default.ChevronRight, contentDescription = null)
-            }
-        }
-        
-        if (recentFiles.isNotEmpty()) {
-            Text(
-                "Son Dosyalar",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            
-            LazyColumn {
-                items(recentFiles) { apk ->
-                    RecentFileItem(
-                        apk = apk,
-                        onClick = { onRecentClick(apk) }
+                        "APK Dosyası Seç",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -333,18 +375,61 @@ private fun HomeContent(
 }
 
 @Composable
-private fun FeatureCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    desc: String,
-    modifier: Modifier = Modifier
-) {
+private fun ModernFeatureGrid() {
+    val features = listOf(
+        FeatureData(Icons.Default.Code, "DEX", "Smali/Java", MaterialTheme.colorScheme.primary),
+        FeatureData(Icons.Default.Storage, "ARSC", "Kaynaklar", MaterialTheme.colorScheme.secondary),
+        FeatureData(Icons.Default.Transform, "Dönüştür", "APK/AAB", MaterialTheme.colorScheme.tertiary),
+        FeatureData(Icons.Default.Edit, "Düzenle", "XML/Manifest", MaterialTheme.colorScheme.primary),
+        FeatureData(Icons.Default.Image, "İkon", "Resimler", MaterialTheme.colorScheme.secondary),
+        FeatureData(Icons.Default.Inventory, "Paket", "Ad Değiştir", MaterialTheme.colorScheme.tertiary)
+    )
+    
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        features.chunked(3).forEach { rowFeatures ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                rowFeatures.forEach { feature ->
+                    ModernFeatureCard(
+                        feature = feature,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (rowFeatures.size < 3) {
+                    repeat(3 - rowFeatures.size) {
+                        Spacer(Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModernFeatureCard(feature: FeatureData, modifier: Modifier = Modifier) {
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.95f else 1f,
+        animationSpec = tween(150),
+        label = "scale"
+    )
+    
     Card(
-        modifier = modifier.height(100.dp),
+        modifier = modifier
+            .height(110.dp)
+            .scale(scale)
+            .clickable(
+                onClick = { /* Feature click */ },
+                onPress = { pressed = true },
+                onRelease = { pressed = false }
+            ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = feature.color.copy(alpha = 0.1f)
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
@@ -354,58 +439,173 @@ private fun FeatureCard(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
+                imageVector = feature.icon,
+                contentDescription = feature.title,
+                tint = feature.color,
+                modifier = Modifier.size(32.dp)
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(title, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-            Text(desc, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+            Spacer(Modifier.height(8.dp))
+            Text(
+                feature.title,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = feature.color
+            )
+            Text(
+                feature.desc,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
 
 @Composable
-private fun RecentFileItem(apk: ApkInfo, onClick: () -> Unit) {
+private fun ModernUpdateCard(onUpdateClick: () -> Unit) {
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.98f else 1f,
+        animationSpec = tween(150),
+        label = "scale"
+    )
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable(onClick = onClick),
+            .scale(scale)
+            .clickable(
+                onClick = onUpdateClick,
+                onPress = { pressed = true },
+                onRelease = { pressed = false }
+            ),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                Icons.Default.Android,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp)
-            )
-            Spacer(Modifier.width(12.dp))
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.SystemUpdate,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+            Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    apk.name,
+                    "Güncelleme Kontrolü",
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    fontSize = 14.sp
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
                 Text(
-                    "${apk.packageName} • ${formatFileSize(apk.size)}",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    "Yeni sürüm varsa hemen indir",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                 )
             }
-            Icon(Icons.Default.ChevronRight, contentDescription = null)
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary
+            )
         }
     }
 }
+
+@Composable
+private fun ModernRecentFileItem(apk: ApkInfo, onClick: () -> Unit) {
+    var visible by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        delay(50)
+        visible = true
+    }
+    
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInHorizontally { it } + fadeIn(),
+        exit = slideOutHorizontally { it } + fadeOut()
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(44.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.Android,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
+                Spacer(Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        apk.name,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        fontSize = 15.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        "${apk.packageName}",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        maxLines = 1
+                    )
+                    Text(
+                        "${formatFileSize(apk.size)} • v${apk.versionName}",
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+    }
+}
+
+private data class FeatureData(
+    val icon: ImageVector,
+    val title: String,
+    val desc: String,
+    val color: Color
+)
 
 private fun formatFileSize(size: Long): String {
     return when {
