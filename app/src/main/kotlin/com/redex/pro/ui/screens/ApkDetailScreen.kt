@@ -105,31 +105,49 @@ fun ApkDetailScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            EditButton(
-                                icon = Icons.Default.Image,
-                                text = "İkon",
-                                onClick = onEditIcon
-                            )
-                            EditButton(
-                                icon = Icons.Default.Edit,
-                                text = "İsim",
+                            Button(
+                                onClick = onEditIcon,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Icon(Icons.Default.Image, contentDescription = null, tint = Color.White)
+                                Spacer(Modifier.width(4.dp))
+                                Text("İkon", color = Color.White)
+                            }
+                            Button(
                                 onClick = {
                                     editType = "name"
                                     editValue = TextFieldValue(apk.name)
                                     showEditDialog = true
-                                }
-                            )
-                            EditButton(
-                                icon = Icons.Default.Inventory,
-                                text = "Paket",
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Icon(Icons.Default.Edit, contentDescription = null, tint = Color.White)
+                                Spacer(Modifier.width(4.dp))
+                                Text("İsim", color = Color.White)
+                            }
+                            Button(
                                 onClick = {
                                     editType = "package"
                                     editValue = TextFieldValue(apk.packageName)
                                     showEditDialog = true
-                                }
-                            )
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Icon(Icons.Default.Inventory, contentDescription = null, tint = Color.White)
+                                Spacer(Modifier.width(4.dp))
+                                Text("Paket", color = Color.White)
+                            }
                         }
                     }
                 }
@@ -257,10 +275,34 @@ fun ApkDetailScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            ResourceButton("resources.arsc", Icons.Default.Storage, onViewArsc)
-                            ResourceButton("AndroidManifest.xml", Icons.Default.Description, onViewManifest)
+                            Button(
+                                onClick = onViewArsc,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary
+                                )
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(Icons.Default.Storage, contentDescription = null, tint = Color.White)
+                                    Spacer(Modifier.height(4.dp))
+                                    Text("resources.arsc", fontSize = 10.sp, color = Color.White)
+                                }
+                            }
+                            Button(
+                                onClick = onViewManifest,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.secondary
+                                )
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(Icons.Default.Description, contentDescription = null, tint = Color.White)
+                                    Spacer(Modifier.height(4.dp))
+                                    Text("Manifest", fontSize = 10.sp, color = Color.White)
+                                }
+                            }
                         }
                     }
                 }
@@ -308,46 +350,6 @@ fun ApkDetailScreen(
                 }
             }
         )
-    }
-}
-
-@Composable
-private fun EditButton(
-    icon: ImageVector,
-    text: String,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.weight(1f),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary
-        )
-    ) {
-        Icon(icon, contentDescription = null, tint = Color.White)
-        Spacer(Modifier.width(4.dp))
-        Text(text, color = Color.White)
-    }
-}
-
-@Composable
-private fun ResourceButton(
-    text: String,
-    icon: ImageVector,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.weight(1f),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.secondary
-        )
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(icon, contentDescription = null, tint = Color.White)
-            Spacer(Modifier.height(4.dp))
-            Text(text, fontSize = 10.sp, color = Color.White)
-        }
     }
 }
 
@@ -514,4 +516,3 @@ private fun formatFileSize(size: Long): String {
         else -> String.format("%.1f GB", size / (1024.0 * 1024.0 * 1024.0))
     }
 }
-
