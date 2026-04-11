@@ -135,7 +135,6 @@ fun HomeScreen(viewModel: MainViewModel) {
                 }
             }
             is MainViewModel.UiState.FileBrowser -> {
-                // Handled in MainActivity
             }
             is MainViewModel.UiState.Update -> {
                 UpdateScreen(
@@ -143,13 +142,10 @@ fun HomeScreen(viewModel: MainViewModel) {
                 )
             }
             is MainViewModel.UiState.DexEditor -> {
-                // Handled in MainActivity
             }
             is MainViewModel.UiState.TextEditor -> {
-                // Handled in MainActivity
             }
             else -> {
-                // Unknown state - go home
                 HomeContent(
                     recentFiles = recentFiles,
                     onSelectApk = { filePicker.launch(arrayOf("application/vnd.android.package-archive")) },
@@ -160,7 +156,6 @@ fun HomeScreen(viewModel: MainViewModel) {
             }
         }
         
-        // Loading
         if (isLoading) {
             Box(
                 modifier = Modifier
@@ -172,7 +167,6 @@ fun HomeScreen(viewModel: MainViewModel) {
             }
         }
         
-        // Error
         error?.let { errorMsg ->
             AlertDialog(
                 onDismissRequest = { viewModel.clearError() },
@@ -201,7 +195,6 @@ private fun HomeContent(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Hoşgeldiniz kartı
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -253,7 +246,6 @@ private fun HomeContent(
             }
         }
         
-        // Özellikler
         Text(
             "Özellikler",
             style = MaterialTheme.typography.titleMedium,
@@ -280,10 +272,9 @@ private fun HomeContent(
         ) {
             FeatureCard(Icons.Default.Edit, "Düzenle", "XML/Manifest", Modifier.weight(1f))
             FeatureCard(Icons.Default.Image, "İkon", "Resimler", Modifier.weight(1f))
-            FeatureCard(Icons.Default.Package, "Paket", "Ad/Değiş", Modifier.weight(1f))
+            FeatureCard(Icons.Default.Default.Package, "Paket", "Ad/Değiş", Modifier.weight(1f))
         }
         
-        // Güncelleme kartı
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -321,7 +312,6 @@ private fun HomeContent(
             }
         }
         
-        // Son dosyalar
         if (recentFiles.isNotEmpty()) {
             Text(
                 "Son Dosyalar",

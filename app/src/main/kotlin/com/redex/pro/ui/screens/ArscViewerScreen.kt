@@ -33,7 +33,6 @@ fun ArscViewerScreen(
     
     val tabs = listOf("Stringler", "Drawable", "Layout", "Diğer")
     
-    // Android fiziksel geri tuşu desteği
     BackHandler(enabled = true) {
         onBack()
     }
@@ -61,7 +60,6 @@ fun ArscViewerScreen(
         }
     ) { padding ->
         Column(modifier = modifier.padding(padding)) {
-            // Arama
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -72,7 +70,6 @@ fun ArscViewerScreen(
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) }
             )
             
-            // İstatistik kartı
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -102,7 +99,6 @@ fun ArscViewerScreen(
                 }
             }
             
-            // Tablar
             TabRow(selectedTabIndex = selectedTab) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
@@ -113,21 +109,31 @@ fun ArscViewerScreen(
                 }
             }
             
-            // İçerik
             when (selectedTab) {
-                0 -> ResourceList(resources.strings.toList().map { it.key to it.value }, searchQuery, onEdit = { key, value ->
-                    selectedResource = key
-                    resourceValue = value
-                    showEditDialog = true
-                })
-                1 -> ResourceList(resources.drawables.map { it to "" }, searchQuery, isEditable = false)
-                2 -> ResourceList(resources.layouts.map { it to "" }, searchQuery, isEditable = false)
+                0 -> ResourceList(
+                    items = resources.strings.toList().map { (k, v) -> k to v },
+                    searchQuery = searchQuery,
+                    onEdit = { key, value ->
+                        selectedResource = key
+                        resourceValue = value
+                        showEditDialog = true
+                    }
+                )
+                1 -> ResourceList(
+                    items = resources.drawables.map { it to "" },
+                    searchQuery = searchQuery,
+                    isEditable = false
+                )
+                2 -> ResourceList(
+                    items = resources.layouts.map { it to "" },
+                    searchQuery = searchQuery,
+                    isEditable = false
+                )
                 else -> Text("Diğer kaynaklar")
             }
         }
     }
     
-    // Düzenleme dialogu
     if (showEditDialog) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },

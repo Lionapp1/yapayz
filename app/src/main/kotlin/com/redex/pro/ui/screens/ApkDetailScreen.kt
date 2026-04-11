@@ -10,7 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,7 +41,6 @@ fun ApkDetailScreen(
     var editType by remember { mutableStateOf("") }
     var editValue by remember { mutableStateOf("") }
     
-    // Android fiziksel geri tuşu desteği
     BackHandler(enabled = true) {
         onBack()
     }
@@ -86,7 +85,6 @@ fun ApkDetailScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // APK Düzenleme Butonları
             item {
                 Card(
                     modifier = Modifier
@@ -106,7 +104,7 @@ fun ApkDetailScreen(
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             EditButton(
                                 icon = Icons.Default.Image,
@@ -123,7 +121,7 @@ fun ApkDetailScreen(
                                 }
                             )
                             EditButton(
-                                icon = Icons.Default.Package,
+                                icon = Icons.Default.Default.Package,
                                 text = "Paket",
                                 onClick = {
                                     editType = "package"
@@ -136,7 +134,6 @@ fun ApkDetailScreen(
                 }
             }
             
-            // Uygulama Bilgileri - Modern kart
             item {
                 ModernInfoCard(
                     title = "Uygulama Bilgileri",
@@ -152,12 +149,10 @@ fun ApkDetailScreen(
                 }
             }
             
-            // Güvenlik Durumu - İmza kartı
             item {
                 SecurityStatusCard(isSigned = apk.isSigned)
             }
             
-            // Hash Değerleri - Collapsable kart
             item {
                 ExpandableInfoCard(
                     title = "Hash Değerleri",
@@ -169,7 +164,6 @@ fun ApkDetailScreen(
                 }
             }
             
-            // DEX dosyaları
             if (apk.dexFiles.isNotEmpty()) {
                 item {
                     Text(
@@ -205,7 +199,6 @@ fun ApkDetailScreen(
                 }
             }
             
-            // İzinler
             if (apk.permissions.isNotEmpty()) {
                 item {
                     Text(
@@ -244,7 +237,6 @@ fun ApkDetailScreen(
                 }
             }
             
-            // Kaynaklar
             item {
                 Card(
                     modifier = Modifier
@@ -275,7 +267,6 @@ fun ApkDetailScreen(
         }
     }
     
-    // Düzenleme Dialog
     if (showEditDialog) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
@@ -327,13 +318,13 @@ private fun EditButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.Modifier.weight(1f),
+        modifier = Modifier.weight(1f),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary
         )
     ) {
         Icon(icon, contentDescription = null, tint = Color.White)
-        Spacer(modifier = Modifier.width(4.dp))
+        Spacer(Modifier.width(4.dp))
         Text(text, color = Color.White)
     }
 }
@@ -346,14 +337,14 @@ private fun ResourceButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.Modifier.weight(1f),
+        modifier = Modifier.weight(1f),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.secondary
         )
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, contentDescription = null, tint = Color.White)
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(Modifier.height(4.dp))
             Text(text, fontSize = 10.sp, color = Color.White)
         }
     }
@@ -377,14 +368,14 @@ private fun ModernInfoCard(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(Modifier.width(8.dp))
                 Text(
                     title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
             }
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
             content()
         }
     }
@@ -449,7 +440,7 @@ private fun SecurityStatusCard(isSigned: Boolean) {
                 tint = if (isSigned) Color(0xFF4CAF50) else Color(0xFFF44336),
                 modifier = Modifier.size(32.dp)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(Modifier.width(12.dp))
             Column {
                 Text(
                     if (isSigned) "İmzalı APK" else "İmzasız APK",
@@ -484,7 +475,8 @@ private fun ExpandableInfoCard(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         icon,
@@ -492,7 +484,7 @@ private fun ExpandableInfoCard(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(Modifier.width(8.dp))
                     Text(
                         title,
                         style = MaterialTheme.typography.titleMedium,
@@ -506,7 +498,7 @@ private fun ExpandableInfoCard(
                 )
             }
             if (expanded) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(Modifier.height(12.dp))
                 content()
             }
         }
