@@ -514,3 +514,4 @@ private fun formatFileSize(size: Long): String {
         else -> String.format("%.1f GB", size / (1024.0 * 1024.0 * 1024.0))
     }
 }
+
