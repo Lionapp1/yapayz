@@ -21,7 +21,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<UiState>(UiState.Home)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
     
-    // Navigasyon geçmişi - geri tuşu için
     private val _navigationHistory = mutableListOf<UiState>()
     private val maxHistorySize = 10
     
@@ -40,23 +39,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val apkParser = ApkParser(application)
     private val apkEditor = ApkEditor(application)
     
-    // Dosya Gezgini verileri
     private val _apkStructure = MutableStateFlow<ApkStructure?>(null)
     val apkStructure: StateFlow<ApkStructure?> = _apkStructure.asStateFlow()
     
-    // DEX Editör verileri
     private val _dexFilesWithClasses = MutableStateFlow<List<Pair<ApkFileEntry, List<ClassInfo>>>>(emptyList())
     val dexFilesWithClasses: StateFlow<List<Pair<ApkFileEntry, List<ClassInfo>>>> = _dexFilesWithClasses.asStateFlow()
     
-    // Seçili dosya
     private val _selectedFile = MutableStateFlow<ApkFileEntry?>(null)
     val selectedFile: StateFlow<ApkFileEntry?> = _selectedFile.asStateFlow()
     
-    // Dosya içeriği
     private val _selectedFileContent = MutableStateFlow<ByteArray?>(null)
     val selectedFileContent: StateFlow<ByteArray?> = _selectedFileContent.asStateFlow()
     
-    // Smali görüntüleyici verileri
     private val _selectedClass = MutableStateFlow<ClassInfo?>(null)
     val selectedClass: StateFlow<ClassInfo?> = _selectedClass.asStateFlow()
     
@@ -67,7 +61,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            
             try {
                 val apkInfo = apkParser.parseApk(uri)
                 _currentApk.value = apkInfo
@@ -85,13 +78,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            
             try {
                 val file = File(path)
                 if (!file.exists()) {
                     throw Exception("Dosya bulunamadı: $path")
                 }
-                
                 val apkInfo = apkParser.parseApkFile(file)
                 _currentApk.value = apkInfo
                 _uiState.value = UiState.ApkDetail
@@ -105,7 +96,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     fun navigateTo(state: UiState) {
-        // Mevcut state'i geçmişe ekle
         val currentState = _uiState.value
         if (currentState != state && currentState !is UiState.Home) {
             _navigationHistory.add(currentState)
@@ -117,12 +107,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     fun navigateBack() {
-        // Geçmişten geri al
         if (_navigationHistory.isNotEmpty()) {
             val previousState = _navigationHistory.removeAt(_navigationHistory.size - 1)
             _uiState.value = previousState
         } else {
-            // Geçmiş boşsa default davranış
             _uiState.value = when (_uiState.value) {
                 is UiState.ApkDetail -> UiState.Home
                 is UiState.DexViewer -> UiState.ApkDetail
@@ -143,7 +131,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // Smali kodunu üret
                 val smaliCode = apkParser.generateSmaliCode(File(_currentApk.value?.path ?: return@launch), dexFile, classInfo)
                 _selectedClass.value = classInfo
                 _smaliContent.value = smaliCode
@@ -159,7 +146,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun goHome() {
         _uiState.value = UiState.Home
         _currentApk.value = null
-        _navigationHistory.clear() // Geçmişi temizle
+        _navigationHistory.clear()
     }
     
     fun clearError() {
@@ -173,8 +160,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (current.size > 10) current.removeLast()
         _recentFiles.value = current
     }
-    
-    // ========== NAVİGASYON FONKSİYONLARI ==========
     
     fun openFileBrowser() {
         _currentApk.value?.let { apk ->
@@ -257,26 +242,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    sealed class UiState {
-        object Home : UiState()
-        object ApkDetail : UiState()
-        object DexViewer : UiState()
-        object ArscViewer : UiState()
-        object ManifestViewer : UiState()
-        object Converter : UiState()
-        object FileBrowser : UiState()
-        object DexEditor : UiState()
-        object TextEditor : UiState()
-        object SmaliViewer : UiState()     // Yeni: Smali kod görüntüleyici
-        object Update : UiState()          // Yeni: Güncelleme ekranı
-    }
-    
-    fun openUpdateScreen() {
-        navigateTo(UiState.Update)
-    }
-    
-}
-    
     fun changeApkName(newName: String) {
         viewModelScope.launch {
             _currentApk.value?.let { apk ->
@@ -311,15 +276,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun goHome() {
-        _uiState.value = UiState.Home
-    }
-    
     fun editSmaliCode(dexFile: ApkFileEntry, classInfo: ClassInfo, smaliCode: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // Smali kodunu kaydet (placeholder)
                 _error.value = "Smali kodu kaydedildi: ${classInfo.name}"
             } catch (e: Exception) {
                 _error.value = "Smali kaydetme hatası: ${e.message}"
@@ -333,7 +293,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // Kaynağı düzenle (placeholder)
                 _error.value = "Kaynak düzenlendi: $key"
             } catch (e: Exception) {
                 _error.value = "Kaynak düzenleme hatası: ${e.message}"
@@ -343,6 +302,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun clearError() {
-        _error.value = null
+    sealed class UiState {
+        object Home : UiState()
+        object ApkDetail : UiState()
+        object DexViewer : UiState()
+        object ArscViewer : UiState()
+        object ManifestViewer : UiState()
+        object Converter : UiState()
+        object FileBrowser : UiState()
+        object DexEditor : UiState()
+        object TextEditor : UiState()
+        object SmaliViewer : UiState()
+        object Update : UiState()
     }
+    
+    fun openUpdateScreen() {
+        navigateTo(UiState.Update)
+    }
+}

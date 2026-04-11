@@ -9,6 +9,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -114,7 +115,7 @@ fun ArscViewerScreen(
             
             // İçerik
             when (selectedTab) {
-                0 -> ResourceList(resources.strings, searchQuery, onEdit = { key, value ->
+                0 -> ResourceList(resources.strings.toList().map { it.key to it.value }, searchQuery, onEdit = { key, value ->
                     selectedResource = key
                     resourceValue = value
                     showEditDialog = true

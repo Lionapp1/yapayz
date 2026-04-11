@@ -327,7 +327,7 @@ private fun EditButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.Modifier.weight(1f),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary
         )
@@ -346,7 +346,7 @@ private fun ResourceButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.Modifier.weight(1f),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.secondary
         )
@@ -485,8 +485,6 @@ private fun ExpandableInfoCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
-                onClick = { expanded = !expanded }
-            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         icon,

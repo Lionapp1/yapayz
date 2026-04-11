@@ -275,7 +275,7 @@ private fun UpdateContent(
         AnimatedVisibility(visible = downloadState is DownloadState.Progress) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 val progress = (downloadState as? DownloadState.Progress)?.percent ?: 0
                 LinearProgressIndicator(
