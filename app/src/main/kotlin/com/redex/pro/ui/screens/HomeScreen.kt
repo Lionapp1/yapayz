@@ -272,7 +272,7 @@ private fun HomeContent(
         ) {
             FeatureCard(Icons.Default.Edit, "Düzenle", "XML/Manifest", Modifier.weight(1f))
             FeatureCard(Icons.Default.Image, "İkon", "Resimler", Modifier.weight(1f))
-            FeatureCard(Icons.Default.Default.Package, "Paket", "Ad/Değiş", Modifier.weight(1f))
+            FeatureCard(Icons.Default.Package, "Paket", "Ad/Değiş", Modifier.weight(1f))
         }
         
         Card(

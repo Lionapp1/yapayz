@@ -10,13 +10,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.redex.pro.data.model.ApkInfo
@@ -39,7 +40,7 @@ fun ApkDetailScreen(
 ) {
     var showEditDialog by remember { mutableStateOf(false) }
     var editType by remember { mutableStateOf("") }
-    var editValue by remember { mutableStateOf("") }
+    var editValue by remember { mutableStateOf(TextFieldValue("")) }
     
     BackHandler(enabled = true) {
         onBack()
@@ -116,16 +117,16 @@ fun ApkDetailScreen(
                                 text = "İsim",
                                 onClick = {
                                     editType = "name"
-                                    editValue = apk.name
+                                    editValue = TextFieldValue(apk.name)
                                     showEditDialog = true
                                 }
                             )
                             EditButton(
-                                icon = Icons.Default.Default.Package,
+                                icon = Icons.Default.Package,
                                 text = "Paket",
                                 onClick = {
                                     editType = "package"
-                                    editValue = apk.packageName
+                                    editValue = TextFieldValue(apk.packageName)
                                     showEditDialog = true
                                 }
                             )
@@ -292,8 +293,8 @@ fun ApkDetailScreen(
                 Button(
                     onClick = {
                         when (editType) {
-                            "name" -> onChangeName(editValue)
-                            "package" -> onChangePackage(editValue)
+                            "name" -> onChangeName(editValue.text)
+                            "package" -> onChangePackage(editValue.text)
                         }
                         showEditDialog = false
                     }
