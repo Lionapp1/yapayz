@@ -122,7 +122,7 @@ fun ApkDetailScreen(
                                 }
                             )
                             EditButton(
-                                icon = Icons.Default.Package,
+                                icon = Icons.Default.Inventory,
                                 text = "Paket",
                                 onClick = {
                                     editType = "package"
@@ -319,7 +319,7 @@ private fun EditButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.Modifier.weight(1f),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary
         )
@@ -338,7 +338,7 @@ private fun ResourceButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier.weight(1f),
+        modifier = Modifier.Modifier.weight(1f),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.secondary
         )
