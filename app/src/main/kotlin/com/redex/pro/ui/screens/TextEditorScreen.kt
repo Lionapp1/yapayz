@@ -115,7 +115,7 @@ fun TextEditorScreen(
                     // Satır numaraları
                     IconButton(onClick = { showLineNumbers = !showLineNumbers }) {
                         Icon(
-                            if (showLineNumbers) Icons.Default.FormatListNumbered else Icons.Default.FormatListBulleted,
+                            if (showLineNumbers) Icons.Default.FormatListNumbered else Icons.AutoMirrored.Filled.FormatListBulleted,
                             "Satır Numaraları"
                         )
                     }

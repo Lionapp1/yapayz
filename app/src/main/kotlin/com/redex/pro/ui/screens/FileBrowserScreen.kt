@@ -231,12 +231,12 @@ private fun getFileIcon(type: ApkFileType): androidx.compose.ui.graphics.vector.
         ApkFileType.DEX -> Icons.Default.Code
         ApkFileType.MANIFEST -> Icons.Default.Description
         ApkFileType.XML_RESOURCE -> Icons.Default.Code
-        ApkFileType.LAYOUT -> Icons.Default.ViewList
+        ApkFileType.LAYOUT -> Icons.AutoMirrored.Filled.ViewList
         ApkFileType.DRAWABLE -> Icons.Default.Image
         ApkFileType.ASSET -> Icons.Default.Folder
         ApkFileType.LIBRARY -> Icons.Default.Memory
         ApkFileType.CERTIFICATE -> Icons.Default.Security
-        else -> Icons.Default.InsertDriveFile
+        else -> Icons.AutoMirrored.Filled.InsertDriveFile
     }
 }
 

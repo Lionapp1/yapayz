@@ -98,7 +98,7 @@ fun ConverterScreen(
                         selected = selectedMode == 0,
                         onClick = { selectedMode = 0 }
                     )
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     ModeOption(
                         icon = Icons.Default.FolderZip,
                         title = "App Bundle → APK",
@@ -106,7 +106,7 @@ fun ConverterScreen(
                         selected = selectedMode == 1,
                         onClick = { selectedMode = 1 }
                     )
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     ModeOption(
                         icon = Icons.Default.Splitscreen,
                         title = "Split APKs",

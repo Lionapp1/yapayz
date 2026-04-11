@@ -81,7 +81,7 @@ fun UpdateScreen(
                 title = { Text("Güncelleme") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Geri")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Geri")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -259,7 +259,7 @@ private fun UpdateContent(
                     value = currentVersion,
                     icon = Icons.Default.PhoneAndroid
                 )
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 VersionInfoRow(
                     label = "Yeni",
                     value = updateInfo.versionName,

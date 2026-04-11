@@ -84,7 +84,7 @@ fun DexEditorProScreen(
                     } else true
                     
                     matchesSearch && isUserClass
-                }?.sortedBy { it.name } ?: emptyList()
+                }.sortedBy { it.name }
             } ?: emptyList()
             
             withContext(Dispatchers.Main) {
