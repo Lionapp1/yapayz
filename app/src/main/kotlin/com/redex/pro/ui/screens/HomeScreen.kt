@@ -7,6 +7,8 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -168,7 +170,6 @@ fun HomeScreen(viewModel: MainViewModel) {
                 }
             }
             
-            // Loading overlay
             AnimatedVisibility(
                 visible = isLoading,
                 enter = fadeIn(),
@@ -206,7 +207,6 @@ fun HomeScreen(viewModel: MainViewModel) {
                 }
             }
             
-            // Error dialog
             error?.let { errorMsg ->
                 AlertDialog(
                     onDismissRequest = { viewModel.clearError() },
@@ -237,12 +237,10 @@ private fun ModernHomeContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Hero Section
         item {
             HeroSection(onSelectApk = onSelectApk)
         }
         
-        // Features Grid
         item {
             Text(
                 "Özellikler",
@@ -256,12 +254,10 @@ private fun ModernHomeContent(
             ModernFeatureGrid()
         }
         
-        // Update Card
         item {
             ModernUpdateCard(onUpdateClick = onUpdateClick)
         }
         
-        // Recent Files
         if (recentFiles.isNotEmpty()) {
             item {
                 Text(
@@ -280,7 +276,6 @@ private fun ModernHomeContent(
             }
         }
         
-        // Bottom spacing
         item {
             Spacer(Modifier.height(32.dp))
         }
@@ -409,9 +404,10 @@ private fun ModernFeatureGrid() {
 
 @Composable
 private fun ModernFeatureCard(feature: FeatureData, modifier: Modifier = Modifier) {
-    var pressed by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.95f else 1f,
+        targetValue = if (isPressed) 0.95f else 1f,
         animationSpec = tween(150),
         label = "scale"
     )
@@ -422,8 +418,8 @@ private fun ModernFeatureCard(feature: FeatureData, modifier: Modifier = Modifie
             .scale(scale)
             .clickable(
                 onClick = { /* Feature click */ },
-                onPress = { pressed = true },
-                onRelease = { pressed = false }
+                interactionSource = interactionSource,
+                indication = null
             ),
         colors = CardDefaults.cardColors(
             containerColor = feature.color.copy(alpha = 0.1f)
@@ -463,9 +459,10 @@ private fun ModernFeatureCard(feature: FeatureData, modifier: Modifier = Modifie
 
 @Composable
 private fun ModernUpdateCard(onUpdateClick: () -> Unit) {
-    var pressed by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.98f else 1f,
+        targetValue = if (isPressed) 0.98f else 1f,
         animationSpec = tween(150),
         label = "scale"
     )
@@ -476,8 +473,8 @@ private fun ModernUpdateCard(onUpdateClick: () -> Unit) {
             .scale(scale)
             .clickable(
                 onClick = onUpdateClick,
-                onPress = { pressed = true },
-                onRelease = { pressed = false }
+                interactionSource = interactionSource,
+                indication = null
             ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -578,7 +575,7 @@ private fun ModernRecentFileItem(apk: ApkInfo, onClick: () -> Unit) {
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        "${apk.packageName}",
+                        apk.packageName,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         maxLines = 1

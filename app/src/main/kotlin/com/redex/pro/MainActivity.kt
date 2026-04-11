@@ -16,12 +16,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.core.content.ContextCompat
 import com.redex.pro.ui.screens.*
 import com.redex.pro.ui.theme.ReDexProTheme
 import com.redex.pro.ui.viewmodel.MainViewModel
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalAnimationApi::class)
 class MainActivity : ComponentActivity() {
@@ -61,37 +59,33 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     
-                    // İzinleri otomatik iste
                     LaunchedEffect(Unit) {
                         if (!checkPermissionsGranted()) {
                             checkPermissions()
                         }
                     }
                     
-                    // Modern geçiş animasyonu
                     AnimatedContent(
                         targetState = uiState,
                         transitionSpec = {
                             val direction = when {
-                                // Geri gitme
                                 targetState is MainViewModel.UiState.Home && 
-                                initialState is MainViewModel.UiState.ApkDetail -> AnimatedContentScope.SlideDirection.Right
+                                initialState is MainViewModel.UiState.ApkDetail -> -1
                                 
                                 targetState is MainViewModel.UiState.ApkDetail && 
-                                initialState is MainViewModel.UiState.DexViewer -> AnimatedContentScope.SlideDirection.Right
+                                initialState is MainViewModel.UiState.DexViewer -> -1
                                 
-                                // İleri gitme
                                 initialState is MainViewModel.UiState.Home && 
-                                targetState is MainViewModel.UiState.ApkDetail -> AnimatedContentScope.SlideDirection.Left
+                                targetState is MainViewModel.UiState.ApkDetail -> 1
                                 
-                                else -> AnimatedContentScope.SlideDirection.Left
+                                else -> 1
                             }
                             
-                            slideIntoContainer(
-                                towards = direction,
+                            slideInHorizontally(
+                                initialOffsetX = { fullWidth -> direction * fullWidth },
                                 animationSpec = tween(350, easing = FastOutSlowInEasing)
-                            ) togetherWith slideOutOfContainer(
-                                towards = direction,
+                            ) togetherWith slideOutHorizontally(
+                                targetOffsetX = { fullWidth -> -direction * fullWidth },
                                 animationSpec = tween(350, easing = FastOutSlowInEasing)
                             )
                         },

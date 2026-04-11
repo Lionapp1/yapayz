@@ -4,19 +4,23 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -63,7 +67,7 @@ fun ApkDetailScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                "${apk.packageName}",
+                                apk.packageName,
                                 maxLines = 1,
                                 fontSize = 12.sp,
                                 color = Color.White.copy(alpha = 0.7f)
@@ -102,7 +106,6 @@ fun ApkDetailScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // APK Edit Actions
             item {
                 ModernEditCard(
                     apk = apk,
@@ -120,19 +123,14 @@ fun ApkDetailScreen(
                 )
             }
             
-            // App Info
             item {
-                ModernInfoCard(
-                    apk = apk
-                )
+                ModernInfoCard(apk = apk)
             }
             
-            // Security Status
             item {
                 ModernSecurityCard(isSigned = apk.isSigned)
             }
             
-            // DEX Files
             if (apk.dexFiles.isNotEmpty()) {
                 item {
                     Text(
@@ -147,16 +145,12 @@ fun ApkDetailScreen(
                 }
             }
             
-            // Permissions
             if (apk.permissions.isNotEmpty()) {
                 item {
-                    ModernPermissionsCard(
-                        permissions = apk.permissions
-                    )
+                    ModernPermissionsCard(permissions = apk.permissions)
                 }
             }
             
-            // Resources
             item {
                 ModernResourcesCard(
                     onViewArsc = onViewArsc,
@@ -164,14 +158,12 @@ fun ApkDetailScreen(
                 )
             }
             
-            // Bottom spacing
             item {
                 Spacer(Modifier.height(32.dp))
             }
         }
     }
     
-    // Edit Dialog
     if (showEditDialog) {
         ModernEditDialog(
             editType = editType,
@@ -207,9 +199,7 @@ private fun ModernEditCard(
         Column(
             modifier = Modifier.padding(20.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.primary,
@@ -268,10 +258,12 @@ private fun ModernActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var pressed by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.95f else 1f,
-        animationSpec = tween(100)
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(100),
+        label = "scale"
     )
     
     Card(
@@ -280,8 +272,8 @@ private fun ModernActionButton(
             .scale(scale)
             .clickable(
                 onClick = onClick,
-                onPress = { pressed = true },
-                onRelease = { pressed = false }
+                interactionSource = interactionSource,
+                indication = null
             ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -427,10 +419,12 @@ private fun ModernSecurityCard(isSigned: Boolean) {
 
 @Composable
 private fun ModernDexCard(dex: com.redex.pro.data.model.DexFile, onClick: () -> Unit) {
-    var pressed by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.98f else 1f,
-        animationSpec = tween(100)
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = tween(100),
+        label = "scale"
     )
     
     Card(
@@ -439,8 +433,8 @@ private fun ModernDexCard(dex: com.redex.pro.data.model.DexFile, onClick: () -> 
             .scale(scale)
             .clickable(
                 onClick = onClick,
-                onPress = { pressed = true },
-                onRelease = { pressed = false }
+                interactionSource = interactionSource,
+                indication = null
             ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -619,10 +613,12 @@ private fun ModernResourceButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var pressed by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.95f else 1f,
-        animationSpec = tween(100)
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(100),
+        label = "scale"
     )
     
     Card(
@@ -631,8 +627,8 @@ private fun ModernResourceButton(
             .scale(scale)
             .clickable(
                 onClick = onClick,
-                onPress = { pressed = true },
-                onRelease = { pressed = false }
+                interactionSource = interactionSource,
+                indication = null
             ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
